@@ -4,7 +4,7 @@ pacman::p_load(popgen.tools,parallel)
 mu=1.5e-8
 recomb_rate=1e-8
 Ne=1e4
-nBases=1e5
+nBases=1e6
 samplesize=20
 s=c(10,50,100,500,1000)*(1/(2*Ne))
 fix=1
@@ -29,14 +29,14 @@ batch_sim<-function(select_coeff,N,sweep_type){
 #Running batches of our simulations
 
 #mclapply takes first element, runs it on a core. And so on. 
-num_sim=5000
+num_sim=1000
 
 Sys.time()
 hard=mclapply(s,batch_sim,N=num_sim,sweep_type="hard",mc.cores=4)
 Sys.time()
 hard<-unlist(hard,recursive = F)
 saveRDS(hard,"~/work/MPhil/data/hard.rds")
-#3mins for num_sim=100
+#2hrs for 1000 sims
 
 
 Sys.time()
@@ -44,14 +44,14 @@ soft=mclapply(s,batch_sim,N=num_sim,sweep_type="soft",mc.cores=4)
 Sys.time()
 soft<-unlist(soft,recursive = F)
 saveRDS(soft,"~/work/MPhil/data/soft.rds")
-#1min for num_sim 100
+#2hrs 10mins for 1000sims
 
 Sys.time()
 neutral<-mclapply(s,batch_sim,N=num_sim,sweep_type="neutral",mc.cores=4)
 Sys.time()
 neutral<-unlist(neutral,recursive = F)
 saveRDS(neutral,"~/work/MPhil/data/neutral.rds")
-#10mins for num_sim 100
+#4hrs for num_sim 1000, 1mb
 
 #debugging
 neutral<-lapply(s,batch_sim,N=num_sim,sweep_type="neutral")
