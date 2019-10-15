@@ -4,6 +4,8 @@ data<-readRDS("~/work/MPhil/data/1k_1mb.rds")
 
 df<-generate_df(sim_list = data,win_split = 10)
 
+DF<-readRDS("~/work/MPhil/data/df.rds")
+
 sim<-data[[414]]
 sub_win(sim$genomes,2)
 
