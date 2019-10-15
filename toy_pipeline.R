@@ -1,6 +1,6 @@
 pacman::p_load("popgen.tools","tidyverse")
 
-data<-readRDS("./data/toy_set.rds")
+data<-readRDS("~/work/MPhil/data/1k_1mb.rds")
 
 df<-generate_df(sim_list = data,win_split = 10)
 
