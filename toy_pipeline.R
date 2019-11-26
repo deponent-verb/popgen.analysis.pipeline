@@ -1,8 +1,27 @@
-pacman::p_load("popgen.tools","tidyverse")
+#load packages
+pacman::p_load("popgen.tools","tidyverse","ggplot2")
 
-data<-readRDS("~/work/MPhil/data/1k_1mb.rds")
+#read in data
+hard<-readRDS("~/work/MPhil/data/hard.rds")
+soft<-readRDS("~/work/MPhil/data/soft.rds")
 
-df<-generate_df(sim_list = data,win_split = 10)
+#check SNP distribution
+snp_dist<-bind_rows(snp_count(hard),snp_count(soft))
+
+#convert rows with s=0 to neutral
+snp_dist<-snp_dist %>% mutate(sweep_type=ifelse(s==0,"neutral",sweep_type))
+snp_dist$sweep_type<-snp_dist$sweep_type %>% as.factor()
+
+#check snp distribution
+ggplot(snp_dist,aes(sweep_type,SNP))+geom_boxplot()
+
+ggplot(snp_dist,aes(sweep_type=="hard",SNP))+geom_boxplot()
+
+snp_dist %>% filter(sweep_type=="hard") %>% summary()
+
+#df<-generate_df(sim_list = data,win_split = 10)
+
+
 
 DF<-readRDS("~/work/MPhil/data/df.rds")
 

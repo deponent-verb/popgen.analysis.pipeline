@@ -30,14 +30,14 @@ batch_sim<-function(select_coeff,N,sweep_type){
 #Running simulations----
 
 #mclapply takes first element, runs it on a core. And so on. 
-num_sim=100
+num_sim=1000
 
 Sys.time()
 hard=mclapply(s,batch_sim,N=num_sim,sweep_type="hard",mc.cores=4)
 Sys.time()
 hard<-unlist(hard,recursive = F)
 saveRDS(hard,"~/work/MPhil/data/hard.rds")
-#3mins for num_sim=100
+#8mins for num_sim=100
 
 
 Sys.time()
