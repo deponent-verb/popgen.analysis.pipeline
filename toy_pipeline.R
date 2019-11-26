@@ -1,5 +1,5 @@
 #load packages
-pacman::p_load("popgen.tools","tidyverse","ggplot2")
+pacman::p_load("popgen.tools","tidyverse","ggplot2","GGally")
 
 #read in data
 hard<-readRDS("~/work/MPhil/data/hard.rds")
@@ -22,13 +22,23 @@ ggplot(snp_dist,aes(sweep_type=="hard",SNP))+geom_boxplot()
 snp_dist %>% filter(sweep_type=="hard") %>% summary()
 
 temp=snp_dist %>% filter(sweep_type=="hard") %>% select(SNP)
-snp_include<-temp$SNP %>% mean()
+snp_include<-temp$SNP %>% mean() %>% round()
+#rounded is 1857
+snp_include=1857
 
 #generate the dataframe ----
 
-data<-c(hard,soft)
+#data<-c(hard,soft)
+saveRDS(data,file="~/work/MPhil/data/toy_data.rds")
+
+data<-readRDS("~/work/MPhil/data/toy_data.rds")
 
 df<-generate_df(sim_list = data,win_split = 10,snp=snp_include)
+write_csv(df,path="./data/toy_df.csv")
+
+#sanity checking of summary statistics
+
+
 
 
 
