@@ -5,6 +5,8 @@ pacman::p_load("popgen.tools","tidyverse","ggplot2")
 hard<-readRDS("~/work/MPhil/data/hard.rds")
 soft<-readRDS("~/work/MPhil/data/soft.rds")
 
+#snp distribution----
+
 #check SNP distribution
 snp_dist<-bind_rows(snp_count(hard),snp_count(soft))
 
@@ -19,7 +21,14 @@ ggplot(snp_dist,aes(sweep_type=="hard",SNP))+geom_boxplot()
 
 snp_dist %>% filter(sweep_type=="hard") %>% summary()
 
-#df<-generate_df(sim_list = data,win_split = 10)
+temp=snp_dist %>% filter(sweep_type=="hard") %>% select(SNP)
+snp_include<-temp$SNP %>% mean()
+
+#generate the dataframe ----
+
+data<-c(hard,soft)
+
+df<-generate_df(sim_list = data,win_split = 10,snp=snp_include)
 
 
 
