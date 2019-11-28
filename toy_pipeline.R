@@ -36,10 +36,13 @@ data<-readRDS("~/work/MPhil/data/toy_data.rds")
 df<-generate_df(sim_list = data,win_split = 10,snp=snp_include)
 write_csv(df,path="./data/toy_df.csv")
 
+df<-read.csv("./data/toy_df.csv")
+
 #sanity checking of summary statistics
 
+ggparcoord(data=df,columns = 5:ncol(df),groupColumn=1)
 
-
+ggplot(data=df, aes(x=dist,y=D)) + geom_line(aes(color=sweep)) + scale_y_continuous(trans="log10")
 
 
 DF<-readRDS("~/work/MPhil/data/df.rds")
