@@ -21,15 +21,21 @@ ggplot(snp_dist,aes(sweep_type=="hard",SNP))+geom_boxplot()
 
 snp_dist %>% filter(sweep_type=="hard") %>% summary()
 
-temp=snp_dist %>% filter(sweep_type=="hard") %>% select(SNP)
-snp_include<-temp$SNP %>% mean() %>% round()
-#rounded is 1857
-snp_include=1857
+#hs_dist=snp_dist %>% filter(sweep_type=="hard") %>% select(SNP)
+ggplot(data=snp_dist, aes(x=SNP, color=sweep_type))+ geom_histogram(bins=50)
+
+#discussion. Areas of each group don't look the same. Bimodal distribution for hard sweeps. 
+
+
+
+#snp_include<-temp$SNP %>% mean() %>% round()
+#handwave 1600, change later
+snp_include=1600
 
 #generate the dataframe ----
 
 #data<-c(hard,soft)
-saveRDS(data,file="~/work/MPhil/data/toy_data.rds")
+#saveRDS(data,file="~/work/MPhil/data/toy_data.rds")
 
 data<-readRDS("~/work/MPhil/data/toy_data.rds")
 
@@ -37,10 +43,21 @@ df<-generate_df(sim_list = data,win_split = 10,snp=snp_include)
 write_csv(df,path="./data/toy_df.csv")
 
 df<-read.csv("./data/toy_df.csv")
+df<-as_tibble(df)
+str(df)
 
 #sanity checking of summary statistics
 
-ggparcoord(data=df,columns = 5:ncol(df),groupColumn=1)
+#index of starting column with summary stats
+sum_start=4
+
+#number of splits in a window
+wins=10
+
+i<-rep(0:5)
+f<-ggparcoord(data=df,columns = (sum_start+i*wins):(sum_start+i*wins-1),groupColumn=1)
+
+
 
 ggplot(data=df, aes(x=dist,y=D)) + geom_line(aes(color=sweep)) + scale_y_continuous(trans="log10")
 
