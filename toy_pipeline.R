@@ -5,6 +5,7 @@ pacman::p_load("popgen.tools","tidyverse","ggplot2","GGally")
 hard<-readRDS("~/work/MPhil/data/hard.rds")
 soft<-readRDS("~/work/MPhil/data/soft.rds")
 
+
 #snp distribution----
 
 #check SNP distribution
