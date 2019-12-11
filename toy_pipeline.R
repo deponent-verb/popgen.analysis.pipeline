@@ -42,8 +42,10 @@ data<-readRDS("~/work/MPhil/data/toy_data.rds")
 df<-generate_df(sim_list = data,win_split = 10,snp=snp_include)
 write_csv(df,path="./data/toy_df.csv")
 
-df<-read.csv("./data/toy_df.csv")
+df<-read_csv("./data/toy_df.csv")
+
 df<-as_tibble(df)
+df$sweep<-df$sweep %>% as.factor()
 str(df)
 
 #sanity checking of summary statistics
@@ -57,7 +59,10 @@ wins=10
 i<-rep(0:5)
 f<-ggparcoord(data=df,columns = (sum_start+i*wins):(sum_start+i*wins-1),groupColumn=1)
 
-
+df %>% pivot_longer(H1:h123_10) %>% 
+  mutate(batch = str_remove_all(name, '\\d')) %>% 
+  ggplot(aes(name, value)) + geom_line(aes(group = ID)) + 
+  facet_wrap(~batch, scales = "free")
 
 ggplot(data=df, aes(x=dist,y=D)) + geom_line(aes(color=sweep)) + scale_y_continuous(trans="log10")
 
