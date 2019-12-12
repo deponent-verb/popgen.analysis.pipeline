@@ -58,7 +58,7 @@ sum_start=4
 wins=10
 
 i<-rep(0:5)
-f<-ggparcoord(data=df,columns = (sum_start+i*wins):(sum_start+i*wins-1),groupColumn=1)
+ggparcoord(data=df,columns = (sum_start+i*wins):(sum_start+(i+1)*wins-1),groupColumn=1)
 
 df %>% pivot_longer(H1:h123_10) %>% 
   mutate(batch = str_remove_all(name, '\\d')) %>% 
