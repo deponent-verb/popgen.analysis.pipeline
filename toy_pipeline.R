@@ -2,14 +2,17 @@
 pacman::p_load("popgen.tools","tidyverse","ggplot2","GGally")
 
 #read in data
-hard<-readRDS("~/work/MPhil/data/hard.rds")
-soft<-readRDS("~/work/MPhil/data/soft.rds")
-
+#hard<-readRDS("~/work/MPhil/data/hard.rds")
+#soft<-readRDS("~/work/MPhil/data/soft.rds")
+#df<-c(hard,soft)
+df<-readRDS("~/work/MPhil/data/toy_data.rds")
 
 #snp distribution----
 
 #check SNP distribution
-snp_dist<-bind_rows(snp_count(hard),snp_count(soft))
+#snp_dist<-bind_rows(snp_count(hard),snp_count(soft))
+snp_dist<-snp_count(df)
+
 
 #convert rows with s=0 to neutral
 snp_dist<-snp_dist %>% mutate(sweep_type=ifelse(s==0,"neutral",sweep_type))
@@ -18,15 +21,12 @@ snp_dist$sweep_type<-snp_dist$sweep_type %>% as.factor()
 #check snp distribution
 ggplot(snp_dist,aes(sweep_type,SNP))+geom_boxplot()
 
-ggplot(snp_dist,aes(sweep_type=="hard",SNP))+geom_boxplot()
-
-snp_dist %>% filter(sweep_type=="hard") %>% summary()
+snp_dist %>% filter(sweep_type=="1") %>% summary()
 
 #hs_dist=snp_dist %>% filter(sweep_type=="hard") %>% select(SNP)
-ggplot(data=snp_dist, aes(x=SNP, color=sweep_type))+ geom_histogram(bins=50)
+ggplot(data=snp_dist, aes(x=SNP, color=sweep_type))+ geom_density()
 
-#discussion. Areas of each group don't look the same. Bimodal distribution for hard sweeps. 
-
+#bimodal distribution due to two different selection coefficients. 
 
 
 #snp_include<-temp$SNP %>% mean() %>% round()
