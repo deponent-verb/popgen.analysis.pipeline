@@ -28,10 +28,10 @@ ggplot(data=snp_dist, aes(x=SNP, color=sweep_type))+ geom_density()
 
 #bimodal distribution due to two different selection coefficients. 
 
-
-#snp_include<-temp$SNP %>% mean() %>% round()
-#handwave 1600, change later
-snp_include=1600
+temp<-snp_dist %>% filter(sweep_type=="1") %>% filter (s==0.01) %>% select(SNP)
+low_mean<-mean(temp$SNP) %>% round()
+low_std<-sd(temp$SNP) %>% round()
+snp_cutoff<-low_mean-2*low_std #1357
 
 #generate the dataframe ----
 
@@ -40,7 +40,7 @@ snp_include=1600
 
 data<-readRDS("~/work/MPhil/data/toy_data.rds")
 
-df<-generate_df(sim_list = data,win_split = 10,snp=snp_include)
+df<-generate_df(sim_list = data,win_split = 10,snp=snp_cutoff)
 write_csv(df,path="./data/toy_df.csv")
 
 df<-read_csv("./data/toy_df.csv")
