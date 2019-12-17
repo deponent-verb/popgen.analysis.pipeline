@@ -69,6 +69,23 @@ for(i in 1:5){
   print(p)
 }
 
+i=1
+ p<-ggparcoord(data=df%>%filter(sweep=="neutral"),columns = (sum_start+i*wins):(sum_start+(i+1)*wins-1),groupColumn=1)
+ print(p)
+ 
+ p<-ggparcoord(data=df%>%filter(sweep=="soft"),columns = (sum_start+i*wins):(sum_start+(i+1)*wins-1),groupColumn=1)
+ print(p)
+ 
+ p<-ggparcoord(data=df%>%filter(sweep=="hard")%>%filter(s_coef==0.01),columns = (sum_start+i*wins):(sum_start+(i+1)*wins-1),groupColumn=1)
+ print(p)
+ 
+ p<-ggparcoord(data=df,columns = (sum_start+i*wins):(sum_start+(i+1)*wins-1),groupColumn=1)
+ print(p)
+ 
+ temp<-df%>%filter(sweep=="hard") %>% head(50)
+ p<-ggparcoord(data=temp,columns = (sum_start+i*wins):(sum_start+(i+1)*wins-1),groupColumn=1)
+ plot(p)
+
 #scaled parcoords
 for(i in 1:5){
   p<-ggparcoord(data=df,columns = (sum_start+i*wins):(sum_start+(i+1)*wins-1),groupColumn=1,scale="center")
