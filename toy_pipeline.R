@@ -51,28 +51,41 @@ df<-as_tibble(df)
 df$sweep<-df$sweep %>% as.factor()
 str(df)
 
+df<-df %>% drop_na()
+
 #sanity checking of summary statistics (raw data) ----
 
 #index of starting column with summary stats
 sum_start=4
 
 #number of splits in a window
-wins=10
+wins=11
 
-ggparcoord(data=df, columns=4:13,groupColumn = 1)
+ggparcoord(data=df, columns=15:25,groupColumn = 1)
 
-
-for(i in 0:5){
+#unscaled parcoords
+for(i in 1:5){
   p<-ggparcoord(data=df,columns = (sum_start+i*wins):(sum_start+(i+1)*wins-1),groupColumn=1)
   print(p)
 }
 
-for(i in 0:5){
+#scaled parcoords
+for(i in 1:5){
   p<-ggparcoord(data=df,columns = (sum_start+i*wins):(sum_start+(i+1)*wins-1),groupColumn=1,scale="center")
   print(p)
 }
-##
 
+#check boxplots
+
+ggplot(data=df,aes(x =sweep,y=D_6))+geom_boxplot()+scale_y_log10()
+ggplot(data=df,aes(x =sweep,y=h1_6))+geom_boxplot()+scale_y_log10()
+ggplot(data=df,aes(x =sweep,y=h2_6))+geom_boxplot()+scale_y_log10()
+ggplot(data=df,aes(x =sweep,y=h12_6))+geom_boxplot()+scale_y_log10()
+ggplot(data=df,aes(x =sweep,y=h123_6))+geom_boxplot()+scale_y_log10()
+
+
+
+#### outdated code
 i<-rep(0:5)
 ggparcoord(data=df,columns = (sum_start+i*wins):(sum_start+(i+1)*wins-1),groupColumn=1)
 

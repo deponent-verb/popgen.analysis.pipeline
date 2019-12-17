@@ -64,6 +64,6 @@ saveRDS(soft,"~/work/MPhil/data/soft.rds")
 # saveRDS(df,"~/work/MPhil/data/toy_set.rds")
 
 ##load data
-df<-readRDS("~/work/MPhil/data/hard.rds")
-data<-generate_df(sim_list = df,win_split = 10)
+df<-readRDS("~/work/MPhil/data/toy_data.rds")
+data<-generate_df(sim_list = df,win_split = 11,snp=1357)
 
