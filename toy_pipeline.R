@@ -83,8 +83,13 @@ i=1
  print(p)
  
  temp<-df%>%filter(sweep=="hard") %>% head(50)
- p<-ggparcoord(data=temp,columns = (sum_start+i*wins):(sum_start+(i+1)*wins-1),groupColumn=1)
+ 
+ p<-ggparcoord(data=temp[,15:25],columns = 1:11)
  plot(p)
+ 
+ temp<-df %>% filter(sweep=="hard") 
+ 
+ ggplot(data=temp[,15:25],aes())+geom_line()
 
 #scaled parcoords
 for(i in 1:5){
