@@ -39,8 +39,7 @@ snp_cutoff<-low_mean-2*low_std #1357
 #saveRDS(data,file="~/work/MPhil/data/toy_data.rds")
 
 data<-readRDS("~/work/MPhil/data/toy_data.rds")
-
-df<-generate_df(sim_list = data,win_split = 10,snp=snp_cutoff)
+df<-generate_df(sim_list = data,win_split = 11,snp=snp_cutoff)
 write_csv(df,path="./data/toy_df.csv")
 
 ## Read in dataframe with raw data
