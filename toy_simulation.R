@@ -6,10 +6,11 @@ recomb_rate=1e-8
 Ne=1e4
 nBases=1e6
 samplesize=20
-s=c(0,0.001,0.01)
+s=c(0.001,0.01)
 #s=c(10,50,100,500,1000)*(1/(2*Ne))
 fix=1
 discoal_path="~/work/programs/discoal/discoal"
+start_f=0.1
 
 #####################################
 #batch simulation function----
@@ -19,18 +20,35 @@ discoal_path="~/work/programs/discoal/discoal"
 #s: a selection coefficient
 
 #return: a list of sim_objs
-batch_sim<-function(select_coeff,N,sweep_type){
+batch_sim<-function(select_coeff=0,N,sweep_type,start_f=0){
   sims<-list()
-  for(i in 1:N){
-    sims[[i]]<-discoal_sim(mu=mu,recomb_rate=recomb_rate,Ne=Ne,genome_length=nBases,samplesize=samplesize,s=select_coeff,discoal_path=discoal_path,fix_generation=fix,sweep=sweep_type)
+  print(select_coeff)
+  print(start_f)
+  if(sweep_type=="hard"){
+    for(i in 1:N){
+      sims[[i]]<-discoal_sim(mu=mu,recomb_rate=recomb_rate,Ne=Ne,genome_length=nBases,samplesize=samplesize,s=select_coeff,discoal_path=discoal_path,fix_generation=fix,sweep=sweep_type)
+    }
   }
+  
+  if(sweep_type=="neutral"){
+    for(i in 1:N){
+      sims[[i]]<-discoal_sim(mu=mu,recomb_rate=recomb_rate,Ne=Ne,genome_length=nBases,samplesize=samplesize,discoal_path=discoal_path,sweep=sweep_type)
+    }
+  }
+  
+  if(sweep_type=="soft"){
+    for(i in 1:N){
+      sims[[i]]<-discoal_sim(mu=mu,recomb_rate=recomb_rate,Ne=Ne,genome_length=nBases,samplesize=samplesize,s=select_coeff,discoal_path=discoal_path,fix_generation=fix,sweep=sweep_type,start_freq = start_f)
+    }
+  }
+
   return(sims)
 }
 
 #Running simulations----
 
 #mclapply takes first element, runs it on a core. And so on. 
-num_sim=1000
+num_sim=100
 
 Sys.time()
 hard=mclapply(s,batch_sim,N=num_sim,sweep_type="hard",mc.cores=4)
@@ -39,9 +57,14 @@ hard<-unlist(hard,recursive = F)
 saveRDS(hard,"~/work/MPhil/data/hard.rds")
 #8mins for num_sim=100
 
+Sys.time()
+neutral=batch_sim(N=num_sim*2,sweep_type = "neutral")
+Sys.time()
+saveRDS(neutral,"~/work/MPhil/data/neutral.rds")
+
 
 Sys.time()
-soft=mclapply(s,batch_sim,N=num_sim,sweep_type="soft",mc.cores=4)
+soft=mclapply(batch_sim,N=num_sim,sweep_type="soft",start_f=0.1,mc.cores=4)
 Sys.time()
 soft<-unlist(soft,recursive = F)
 saveRDS(soft,"~/work/MPhil/data/soft.rds")
