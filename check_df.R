@@ -1,4 +1,5 @@
-pacman::p_load(tidyverse)
+pacman::p_load(tidyverse,popgen.tools)
+
 #sanity checking the dataframe
 
 #parallel coordinations plot
@@ -29,3 +30,6 @@ DF %>%
   map_df(broom::tidy, .id = "Pred") %>% 
   filter(p.value <= 0.05) %>% 
   print(n = 30)
+
+
+

@@ -3,8 +3,10 @@ pacman::p_load("popgen.tools","tidyverse","ggplot2","GGally")
 
 #read in data
 #hard<-readRDS("~/work/MPhil/data/hard.rds")
+#neutral<-readRDS("~/work/MPhil/data/neutral.rds")
 #soft<-readRDS("~/work/MPhil/data/soft.rds")
-#df<-c(hard,soft)
+#df<-c(hard,neutral)
+#saveRDS(df,file = "~/work/MPhil/data/toy_data.rds")
 df<-readRDS("~/work/MPhil/data/toy_data.rds")
 
 #snp distribution----
@@ -14,24 +16,17 @@ df<-readRDS("~/work/MPhil/data/toy_data.rds")
 snp_dist<-snp_count(df)
 
 
-#convert rows with s=0 to neutral
-snp_dist<-snp_dist %>% mutate(sweep_type=ifelse(s==0,"neutral",sweep_type))
-snp_dist$sweep_type<-snp_dist$sweep_type %>% as.factor()
-
 #check snp distribution
 ggplot(snp_dist,aes(sweep_type,SNP))+geom_boxplot()
 
-snp_dist %>% filter(sweep_type=="1") %>% summary()
-
-#hs_dist=snp_dist %>% filter(sweep_type=="hard") %>% select(SNP)
 ggplot(data=snp_dist, aes(x=SNP, color=sweep_type))+ geom_density()
 
 #bimodal distribution due to two different selection coefficients. 
 
-temp<-snp_dist %>% filter(sweep_type=="1") %>% filter (s==0.01) %>% select(SNP)
+temp<-snp_dist %>% filter(sweep_type=="hard") %>% filter (s==0.01) %>% select(SNP)
 low_mean<-mean(temp$SNP) %>% round()
 low_std<-sd(temp$SNP) %>% round()
-snp_cutoff<-low_mean-2*low_std #1357
+snp_cutoff<-low_mean-2*low_std #1418
 
 #generate the dataframe ----
 
