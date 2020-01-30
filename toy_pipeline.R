@@ -7,16 +7,14 @@ pacman::p_load("popgen.tools","tidyverse","ggplot2","GGally")
 #soft<-readRDS("~/work/MPhil/data/soft.rds")
 #df<-c(hard,neutral)
 #saveRDS(df,file = "~/work/MPhil/data/toy_data.rds")
-df<-readRDS("~/work/MPhil/data/toy_data.rds")
+data<-readRDS("~/work/MPhil/data/toy_data.rds")
 
 #snp distribution----
 
 #check SNP distribution
-#snp_dist<-bind_rows(snp_count(hard),snp_count(soft))
 snp_dist<-snp_count(df)
 
-
-#check snp distribution
+#check snp distribution using boxplots
 ggplot(snp_dist,aes(sweep_type,SNP))+geom_boxplot()
 
 ggplot(data=snp_dist, aes(x=SNP, color=sweep_type))+ geom_density()
@@ -35,6 +33,10 @@ snp_cutoff<-low_mean-2*low_std #1418
 
 data<-readRDS("~/work/MPhil/data/toy_data.rds")
 df<-generate_df(sim_list = data,win_split = 11,snp=snp_cutoff)
+
+#check if there's any NAs. That would make me sad. 
+apply(df, 2, function(x) any(is.na(x)))
+
 write_csv(df,path="./data/toy_df.csv")
 
 ## Read in dataframe with raw data
@@ -45,7 +47,21 @@ df<-as_tibble(df)
 df$sweep<-df$sweep %>% as.factor()
 str(df)
 
+#there are no NAs!
 df<-df %>% drop_na()
+
+
+#stop here
+
+p<-ggparcoord(data=df,columns = (4):(14),groupColumn=1,scale="globalminmax")
+p2<-ggparcoord(data=df,columns = (15):(25),groupColumn=1,scale="globalminmax")
+p3<-ggparcoord(data=df,columns = (26):(36),groupColumn=1,scale="globalminmax")
+p4<-ggparcoord(data=df,columns = (37):(47),groupColumn=1,scale="globalminmax")
+p5<-ggparcoord(data=df,columns = (48):(58),groupColumn=1,scale="globalminmax")
+p6<-ggparcoord(data=df,columns = (59):(69),groupColumn=1,scale="globalminmax")
+p7<-ggparcoord(data=df,columns = (70):(80),groupColumn=1,scale="globalminmax")
+
+################################################
 
 #sanity checking of summary statistics (raw data) ----
 

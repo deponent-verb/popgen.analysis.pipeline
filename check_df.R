@@ -1,5 +1,8 @@
 pacman::p_load(tidyverse,popgen.tools)
 
+#load data
+DF<-readRDS("~/work/MPhil/data/toy_data.rds")
+
 #sanity checking the dataframe
 
 #parallel coordinations plot

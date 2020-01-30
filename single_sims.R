@@ -1,4 +1,6 @@
 ##single sims
+
+#hard sweep
 mu=1.5e-8
 recomb_rate=1e-8
 Ne=10000
@@ -13,7 +15,20 @@ G<-temp$genomes
 
 library(jpeg)
 writeJPEG(G,"~/Desktop/test.jpeg",quality=1)
+
+#neutral sweep
   
-  
+mu=1.5e-8
+recomb_rate=1e-8
+Ne=10000
+nBases=1e6
+samplesize=200
+discoal_path="~/work/programs/discoal/discoal"
+
+temp<-discoal_sim(mu=mu,recomb_rate=recomb_rate,Ne=Ne,genome_length=nBases,samplesize=samplesize,discoal_path=discoal_path,sweep="neutral")
+G<-temp$genomes
+
+library(jpeg)
+writeJPEG(G,"~/Desktop/test.jpeg",quality=1)  
   
   
