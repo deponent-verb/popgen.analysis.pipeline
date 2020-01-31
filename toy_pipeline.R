@@ -48,10 +48,11 @@ df$sweep<-df$sweep %>% as.factor()
 str(df)
 
 #there are no NAs!
-df<-df %>% drop_na()
+#df<-df %>% drop_na()
 
+# exploratory data analysis----
 
-#stop here
+#parallel coords plot
 
 p<-ggparcoord(data=df,columns = (4):(14),groupColumn=1,scale="globalminmax")
 p2<-ggparcoord(data=df,columns = (15):(25),groupColumn=1,scale="globalminmax")
@@ -59,7 +60,67 @@ p3<-ggparcoord(data=df,columns = (26):(36),groupColumn=1,scale="globalminmax")
 p4<-ggparcoord(data=df,columns = (37):(47),groupColumn=1,scale="globalminmax")
 p5<-ggparcoord(data=df,columns = (48):(58),groupColumn=1,scale="globalminmax")
 p6<-ggparcoord(data=df,columns = (59):(69),groupColumn=1,scale="globalminmax")
-p7<-ggparcoord(data=df,columns = (70):(80),groupColumn=1,scale="globalminmax")
+#p7<-ggparcoord(data=df,columns = (70):(80),groupColumn=1,scale="globalminmax")
+
+#remove ID column
+df<-select(df,-c(ID))
+
+#check for near 0 variance predictors
+pacman::p_load(caret)
+
+nzv<-nearZeroVar(df,saveMetrics = TRUE)
+#there are no problematic variables, not counting ID. We want F on both zeroVar and nzv. 
+
+#any problematic variables can be removed as such
+#filter_df<-df[,-nzv]
+
+#convert data into a design matrix
+df_m<-dummyVars(sweep~.,data=df)
+head(predict(df_m, newdata = df))
+
+
+#identify correlated predictors
+df_pred<-select(df,-c(sweep,s_coef))
+des_cor<-cor(df_pred)
+high_corr<-findCorrelation(des_cor,cutoff = 0.75)
+filtered_pred<-df_pred[,-high_corr]
+
+#check that we removed predictors with corr >0.75
+des_cor2<-cor(filtered_pred)
+summary(des_cor2[upper.tri(des_cor2)])
+
+#check for linear combinations
+comboInfo<-findLinearCombos(filtered_pred)
+filtered_pred<-filtered_pred[,-comboInfo$remove]
+
+## scaling ----
+
+#substract mean and divide by std for each column. Note that we probably want to do this over a row/window. 
+preProcValues<-preProcess(filtered_pred,method=c("center","scale"))
+
+#make new transformed set of training and test data
+dataTransformed<-predict(preProcValues,filtered_pred)
+final_tdata<-cbind(df$sweep,dataTransformed)
+colnames(final_tdata)[1]<-"sweep"
+
+#trainTransformed<-predict(preProcValues,train_data)
+#testTransformed<-predict(preProcValues,test_data)
+
+#partition dataset
+
+set.seed(1688)
+train_size=350
+sample_size=nrow(final_tdata)
+inTrain<-sample(sample_size,train_size)
+
+train_data<-final_tdata[inTrain,]
+test_data<-final_tdata[-inTrain,]
+
+
+
+
+
+#stop here
 
 ################################################
 
