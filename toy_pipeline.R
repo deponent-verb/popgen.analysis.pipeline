@@ -116,9 +116,52 @@ inTrain<-sample(sample_size,train_size)
 train_data<-final_tdata[inTrain,]
 test_data<-final_tdata[-inTrain,]
 
+# model fitting ----
+
+grid<-expand.grid(C=seq(5,20,by=5))
+
+#do 10 fold CV, 3 times for each model
+train.control<-trainControl(method="repeatedcv", number=10, repeats=3,classProbs = TRUE)
+
+#logistical regression, boosted
+lrfit<-train(sweep~., data=train_data, method="LogitBoost",
+             nIter=grid,metric="Accuracy",trControl=train.control )
+
+lr.preds<-predict(lrfit, test_data) 
+confusionMatrix(lr.preds, test_data$sweep)
+
+#xgboost
+
+tune.grid <- expand.grid(eta = c(0.05, 0.075, 0.1), nrounds = c(50, 75, 100),
+                         max_depth = 6,
+                         min_child_weight = c(2.0, 2.25, 2.5), colsample_bytree = c(0.3, 0.4, 0.5), gamma = 0,
+                         subsample = 1)
+
+xg.fit <- train(sweep ~ .,
+                data = train_data,
+                method = "xgbTree", tuneGrid = tune.grid, trControl = train.control)
 
 
+xg.preds<-predict(xg.fit,test_data) 
+confusionMatrix(xg.preds, test_data$sweep)
 
+#SVM
+
+grid<-expand.grid(C=seq(0.5,1.5,by=0.2))
+
+svm.fit<-train(sweep~., data=train_data,method="svmLinear",
+               tuneGrid=grid,metric="Accuracy",trControl=train.control)
+
+svm.preds<-predict(svm.fit,test_data)
+confusionMatrix(svm.preds,test_data$sweep)
+
+#Random Forest
+
+grid<-expand.grid(mtry=seq(15,35,by=5))
+
+rf.fit<-train(sweep~.,data=train_data,method="parRF",tuneGrid=grid,metric="Accuracy",trControl=train.control)
+rf.preds<-predict(rf.fit,test_data)
+confusionMatrix(rf.preds,test_data$sweep)
 
 #stop here
 
