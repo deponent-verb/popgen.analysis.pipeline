@@ -1,18 +1,18 @@
 #load packages
-pacman::p_load("popgen.tools","tidyverse","ggplot2","GGally")
+pacman::p_load("popgen.tools","tidyverse","ggplot2","GGally","caret")
 
 #read in data
 #hard<-readRDS("~/work/MPhil/data/hard.rds")
 #neutral<-readRDS("~/work/MPhil/data/neutral.rds")
 #soft<-readRDS("~/work/MPhil/data/soft.rds")
 #df<-c(hard,neutral)
-#saveRDS(df,file = "~/work/MPhil/data/toy_data.rds")
-data<-readRDS("~/work/MPhil/data/toy_data.rds")
+# saveRDS(df,file = "~/work/MPhil/data/toy_data.rds")
+# data<-readRDS("~/work/MPhil/data/toy_data.rds")
 
 #snp distribution----
 
 #check SNP distribution
-snp_dist<-snp_count(df)
+snp_dist<-snp_count(data)
 
 #check snp distribution using boxplots
 ggplot(snp_dist,aes(sweep_type,SNP))+geom_boxplot()
@@ -24,7 +24,7 @@ ggplot(data=snp_dist, aes(x=SNP, color=sweep_type))+ geom_density()
 temp<-snp_dist %>% filter(sweep_type=="hard") %>% filter (s==0.01) %>% select(SNP)
 low_mean<-mean(temp$SNP) %>% round()
 low_std<-sd(temp$SNP) %>% round()
-snp_cutoff<-low_mean-2*low_std #1418
+snp_cutoff<-low_mean-2*low_std #2600
 
 #generate the dataframe ----
 
@@ -32,7 +32,7 @@ snp_cutoff<-low_mean-2*low_std #1418
 #saveRDS(data,file="~/work/MPhil/data/toy_data.rds")
 
 data<-readRDS("~/work/MPhil/data/toy_data.rds")
-df<-generate_df(sim_list = data,win_split = 11,snp=snp_cutoff)
+df<-generate_df(sim_list = data,win_split = 11,snp=snp_cutoff,form="wide")
 
 #check if there's any NAs. That would make me sad. 
 apply(df, 2, function(x) any(is.na(x)))
@@ -54,12 +54,12 @@ str(df)
 
 #parallel coords plot
 
-p<-ggparcoord(data=df,columns = (4):(14),groupColumn=1,scale="globalminmax")
-p2<-ggparcoord(data=df,columns = (15):(25),groupColumn=1,scale="globalminmax")
-p3<-ggparcoord(data=df,columns = (26):(36),groupColumn=1,scale="globalminmax")
-p4<-ggparcoord(data=df,columns = (37):(47),groupColumn=1,scale="globalminmax")
-p5<-ggparcoord(data=df,columns = (48):(58),groupColumn=1,scale="globalminmax")
-p6<-ggparcoord(data=df,columns = (59):(69),groupColumn=1,scale="globalminmax")
+p<-ggparcoord(data=df,columns = (4):(14),groupColumn=2,scale="globalminmax")
+p2<-ggparcoord(data=df,columns = (15):(25),groupColumn=2,scale="globalminmax")
+p3<-ggparcoord(data=df,columns = (26):(36),groupColumn=2,scale="globalminmax")
+p4<-ggparcoord(data=df,columns = (37):(47),groupColumn=2,scale="globalminmax")
+p5<-ggparcoord(data=df,columns = (48):(58),groupColumn=2,scale="globalminmax")
+p6<-ggparcoord(data=df,columns = (59):(69),groupColumn=2,scale="globalminmax")
 #p7<-ggparcoord(data=df,columns = (70):(80),groupColumn=1,scale="globalminmax")
 
 #remove ID column
@@ -109,7 +109,7 @@ colnames(final_tdata)[1]<-"sweep"
 #partition dataset
 
 set.seed(1688)
-train_size=350
+train_size=900
 sample_size=nrow(final_tdata)
 inTrain<-sample(sample_size,train_size)
 
@@ -118,12 +118,11 @@ test_data<-final_tdata[-inTrain,]
 
 # model fitting ----
 
-grid<-expand.grid(C=seq(5,20,by=5))
-
 #do 10 fold CV, 3 times for each model
 train.control<-trainControl(method="repeatedcv", number=10, repeats=3,classProbs = TRUE)
 
 #logistical regression, boosted
+grid<-expand.grid(C=seq(5,20,by=5))
 lrfit<-train(sweep~., data=train_data, method="LogitBoost",
              nIter=grid,metric="Accuracy",trControl=train.control )
 
@@ -145,7 +144,7 @@ xg.fit <- train(sweep ~ .,
 xg.preds<-predict(xg.fit,test_data) 
 confusionMatrix(xg.preds, test_data$sweep)
 
-#SVM
+#SVM (Linear)
 
 grid<-expand.grid(C=seq(0.5,1.5,by=0.2))
 

@@ -5,7 +5,7 @@ mu=1.5e-8
 recomb_rate=1e-8
 Ne=1e4
 nBases=1e6
-samplesize=20
+samplesize=200
 s=c(0.001,0.01)
 #s=c(10,50,100,500,1000)*(1/(2*Ne))
 fix=1
@@ -48,7 +48,7 @@ batch_sim<-function(select_coeff=0,N,sweep_type,start_f=0){
 #Running simulations----
 
 #mclapply takes first element, runs it on a core. And so on. 
-num_sim=100
+num_sim=250
 
 Sys.time()
 hard=mclapply(s,batch_sim,N=num_sim,sweep_type="hard",mc.cores=4)
