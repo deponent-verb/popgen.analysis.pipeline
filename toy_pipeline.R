@@ -47,6 +47,9 @@ df<-as_tibble(df)
 df$sweep<-df$sweep %>% as.factor()
 str(df)
 
+#drop ID column
+df<-subset(df,select=-ID)
+
 #there are no NAs!
 #df<-df %>% drop_na()
 
@@ -54,8 +57,30 @@ str(df)
 
 #parallel coords plot
 
-p<-ggparcoord(data=df,columns = (4):(14),groupColumn=2,scale="globalminmax")
-p2<-ggparcoord(data=df,columns = (15):(25),groupColumn=2,scale="globalminmax")
+#create df to store means of each variable for both classes
+mean_values<- df %>% group_by(sweep) %>% 
+  summarise_all(mean) %>%
+  pivot_longer(-sweep,names_to = "variable", values_to = "value")
+
+#check mean computations
+df %>% dplyr::filter(sweep=="hard") %>% summarise_all(mean)
+df %>% dplyr::filter(sweep=="neutral") %>% summarise_all(mean)
+
+#grabbing the right values for each variable
+
+
+#alpha 0.01, mean line
+
+p<-ggparcoord(data=df,columns = (3):(13),groupColumn="sweep",scale="globalminmax",alphaLines = 0.1) +
+  geom_point(data=mean_values[2:12,],aes(x=variable, y=value, color=sweep),size=3,inherit.aes = F) +
+  geom_point(data=mean_values[69:79,],aes(x=variable, y=value, color=sweep),size=3,inherit.aes = F)
+
+p2<-ggparcoord(data=df,columns = (14):(24),groupColumn="sweep",scale="globalminmax",alphaLines = 0.1) +
+  geom_point(data=mean_values[13:23,],aes(x=variable, y=value, color=sweep),size=3,inherit.aes = F) +
+  geom_point(data=mean_values[80:90,],aes(x=variable, y=value, color=sweep),size=3,inherit.aes = F)
+
+
+
 p3<-ggparcoord(data=df,columns = (26):(36),groupColumn=2,scale="globalminmax")
 p4<-ggparcoord(data=df,columns = (37):(47),groupColumn=2,scale="globalminmax")
 p5<-ggparcoord(data=df,columns = (48):(58),groupColumn=2,scale="globalminmax")
@@ -154,15 +179,36 @@ svm.fit<-train(sweep~., data=train_data,method="svmLinear",
 svm.preds<-predict(svm.fit,test_data)
 confusionMatrix(svm.preds,test_data$sweep)
 
+#SVM (poly)
+
+grid<-expand.grid(degree=seq(1,4,by=1),scale=seq(0.1,1,by=0.2),C=seq(0.5,1.5,by=0.2))
+
+
+svm.fit<-train(sweep~., data=train_data,method="svmPoly",
+               tuneGrid=grid,metric="Accuracy",trControl=train.control)
+
+svm.preds<-predict(svm.fit,test_data)
+confusionMatrix(svm.preds,test_data$sweep)
+
 #Random Forest
 
 grid<-expand.grid(mtry=seq(15,35,by=5))
 
 rf.fit<-train(sweep~.,data=train_data,method="parRF",tuneGrid=grid,metric="Accuracy",trControl=train.control)
-rf.preds<-predict(rf.fit,test_data)
+rf.preds<-predict(rf.fit,test_data,type = "prob")
 confusionMatrix(rf.preds,test_data$sweep)
 
 #stop here
+#yardstick for ROC curve,
+
+#comparison, 
+
+#compute time
+#ROC
+#explanatory
+#confusion matrix (standard cutoff)
+#variable of importance
+#keras DL
 
 ################################################
 
