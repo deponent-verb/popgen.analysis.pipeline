@@ -66,10 +66,7 @@ mean_values<- df %>% group_by(sweep) %>%
 df %>% dplyr::filter(sweep=="hard") %>% summarise_all(mean)
 df %>% dplyr::filter(sweep=="neutral") %>% summarise_all(mean)
 
-#grabbing the right values for each variable
-
-
-#alpha 0.01, mean line
+#grabbing the right values for each variable (not complete)
 
 p<-ggparcoord(data=df,columns = (3):(13),groupColumn="sweep",scale="globalminmax",alphaLines = 0.1) +
   geom_point(data=mean_values[2:12,],aes(x=variable, y=value, color=sweep),size=3,inherit.aes = F) +
@@ -79,16 +76,21 @@ p2<-ggparcoord(data=df,columns = (14):(24),groupColumn="sweep",scale="globalminm
   geom_point(data=mean_values[13:23,],aes(x=variable, y=value, color=sweep),size=3,inherit.aes = F) +
   geom_point(data=mean_values[80:90,],aes(x=variable, y=value, color=sweep),size=3,inherit.aes = F)
 
-
-
 p3<-ggparcoord(data=df,columns = (26):(36),groupColumn=2,scale="globalminmax")
 p4<-ggparcoord(data=df,columns = (37):(47),groupColumn=2,scale="globalminmax")
 p5<-ggparcoord(data=df,columns = (48):(58),groupColumn=2,scale="globalminmax")
 p6<-ggparcoord(data=df,columns = (59):(69),groupColumn=2,scale="globalminmax")
-#p7<-ggparcoord(data=df,columns = (70):(80),groupColumn=1,scale="globalminmax")
 
 #remove ID column
 df<-select(df,-c(ID))
+
+#PCA 
+library("ggfortify")
+df_nores<-select(df,-c(sweep,s_coef))
+autoplot(prcomp(df_nores,scale=T))
+
+autoplot(prcomp(df_nores,scale=T),data=df,colour='sweep')
+
 
 #check for near 0 variance predictors
 pacman::p_load(caret)
@@ -176,19 +178,18 @@ grid<-expand.grid(C=seq(0.5,1.5,by=0.2))
 svm.fit<-train(sweep~., data=train_data,method="svmLinear",
                tuneGrid=grid,metric="Accuracy",trControl=train.control)
 
-svm.preds<-predict(svm.fit,test_data)
+svm.preds<-predict(svm.fit,test_data,type="prob")
 confusionMatrix(svm.preds,test_data$sweep)
 
 #SVM (poly)
 
 grid<-expand.grid(degree=seq(1,4,by=1),scale=seq(0.1,1,by=0.2),C=seq(0.5,1.5,by=0.2))
 
-
-svm.fit<-train(sweep~., data=train_data,method="svmPoly",
+psvm.fit<-train(sweep~., data=train_data,method="svmPoly",
                tuneGrid=grid,metric="Accuracy",trControl=train.control)
 
-svm.preds<-predict(svm.fit,test_data)
-confusionMatrix(svm.preds,test_data$sweep)
+psvm.preds<-predict(svm.fit,test_data)
+confusionMatrix(psvm.preds,test_data$sweep)
 
 #Random Forest
 
@@ -197,6 +198,52 @@ grid<-expand.grid(mtry=seq(15,35,by=5))
 rf.fit<-train(sweep~.,data=train_data,method="parRF",tuneGrid=grid,metric="Accuracy",trControl=train.control)
 rf.preds<-predict(rf.fit,test_data,type = "prob")
 confusionMatrix(rf.preds,test_data$sweep)
+
+#Model Comparison
+pacman::p_load(yardstick)
+
+truth<-test_data$sweep
+rf_roc<-cbind(truth,rf.preds)
+roc_curve(rf_roc,truth=truth,estimate=hard)
+
+roc_curve(rf_roc,truth=truth,estimate=hard) %>% 
+  ggplot(aes(x = 1 - specificity, y = sensitivity)) + 
+  geom_path() +
+  geom_abline(lty=3) +
+  coord_equal() +
+  theme_bw()
+
+svm_roc<-cbind(truth,svm.preds)
+
+roc_curve(svm_roc,truth=truth,estimate=hard) %>% 
+  ggplot(aes(x = 1 - specificity, y = sensitivity)) + 
+  geom_path() +
+  geom_abline(lty=3) +
+  coord_equal() +
+  theme_bw() 
+
+rf_out<-roc_curve(rf_roc,truth=truth,estimate=hard) %>% 
+  mutate(model="rf")
+
+svm_out<-roc_curve(svm_roc,truth=truth,estimate=hard) %>%
+  mutate(model="svm")
+
+models_out<-bind_rows(rf_out,svm_out)
+
+models_out %>% 
+  #get individual roc curves for each model
+  group_by(model) %>% 
+  ggplot(
+    aes(x=1-specificity,y=sensitivity,color=model)
+    ) +
+  geom_line(size=1.1) +
+  geom_abline(slope=1, intercept = 0, size=0.2) +
+  #fix aspect ratio to 1:1 for visualization
+  coord_fixed() +
+  theme_cowplot()
+
+#AUC
+  
 
 #stop here
 #yardstick for ROC curve,
