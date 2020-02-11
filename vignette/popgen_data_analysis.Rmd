@@ -1,0 +1,330 @@
+---
+title: "Popgen_Data_Analysis"
+author: "Anthony Kwong (a1708050)"
+date: "10/02/2020"
+output: pdf_document
+---
+This is a tutorial for analysing some simulated data using the popgen.tools R package and discoal.
+
+We will be analysising the toy_data. It is a list of 2000 discoal simulation objects. 1000 are neutral simulations and 1000 are hard sweeps. Half of the hard sweeps have s=0.01 (strong selection) and the other half s=0.001 (weak selection). The sweeps fixed one generation before sampling (present). We used a simple demographic model with a constant effective population size, mutation rate and recombination rate. 200 samples from the present are taken. Below are the simulation parameter for reference.  
+
+```{r,eval=FALSE}
+#population params----
+mu=1.5e-8
+recomb_rate=1e-8
+Ne=1e4
+nBases=1e6
+samplesize=200
+s=c(0.001,0.01)
+fix=1
+discoal_path="~/work/programs/discoal/discoal"
+```
+
+```{r}
+toy_data<-readRDS("~/work/MPhil/data/toy_data.rds")
+```
+
+```{r}
+pacman::p_load(popgen.tools,ggplot2,tidyverse)
+```
+
+
+## Check SNP distribution
+
+Before we generate our dataframe, let's check the distribution of SNPs across the simulations. One concern is that selective sweeps have lower diversity and hence less SNPs than neutral simulations. However, in real data, there are many other factors for why a particular region may have fewer SNPs, independent of selection. Thus we don't want our method to simply flag regions as a hard sweep based on the number of SNPs. Instead we want to fit our model, using data where the number of SNPs is similar between sweeps and neutral simulations. We also want to see if the data looks sensible before proceeding. 
+
+We obtain the snp distribution using snp_count(). 
+
+```{r}
+#check SNP distribution
+snp_dist<-snp_count(toy_data)
+```
+
+```{r}
+#check snp distribution using boxplots
+ggplot(snp_dist,aes(sweep_type,SNP))+geom_boxplot()
+```
+
+Hard sweeps have lower diversity than neutral simulations, hence fewer SNPs. The distribution is wider for hard sweeps because we used 2 selection coefficients. 
+
+```{r}
+ggplot(data=snp_dist, aes(x=SNP, color=sweep_type))+ geom_density()
+```
+
+The SNP distribution is roughly normal for neutral simulations. Hard sweeps is bimodal. This reflects half the hard sweeps being strong selection and half being weak selection. 
+
+```{r}
+temp<-subset(snp_dist,sweep_type=="hard")
+temp$s<-as.factor(temp$s)
+ggplot(data=temp, aes(x=SNP, color=s))+ geom_density()
+```
+
+Stronger selection leads to lower diversity and hence fewer SNPs. 
+
+Since the hard sweeps with strong selection have the fewest SNPs, we will use its distribution to decide on a SNP cutoff. Let's try a cutoff value of the mean - 1 standard deviation. 
+
+```{r}
+strong_dist<-temp %>% subset(s==0.01) 
+avg<-mean(strong_dist$SNP) %>% floor()
+std<-sd(strong_dist$SNP) %>% floor()
+cutoff<-avg-std
+```
+
+```{r}
+nrow(subset(snp_dist,SNP>cutoff))/nrow(snp_dist)
+```
+
+~96% of the simulations have a SNP count higher than the cutoff (2792 SNPs).
+
+## Generating the dataframe
+
+```{r,eval=FALSE}
+#df<-generate_df(sim_list = data,win_split =11,snp=cutoff,form="wide")
+```
+
+We obtain our dataframe using generate_df(). For all the simulations with more SNPs than the cutoff, we retain the central 2792 SNPs with the selected mutation (if present) in the middle. The dataframe will be in wide form meaning that each row is an individual simulation. 
+
+```{r}
+df<-read_csv("../data/toy_df.csv")
+
+#data cleaning
+df<-as_tibble(df)
+df$sweep<-df$sweep %>% as.factor()
+df<-subset(df,select=-ID)
+```
+
+```{r}
+head(df)
+```
+
+### Exploratory Data Analysis
+
+#### Parallel Coordinates Plot
+
+We will add the mean values onto the parallel coordinates plots.
+
+```{r}
+#create df to store means of each variable for both classes
+mean_values<- df %>% group_by(sweep) %>% 
+  summarise_all(mean) %>%
+  pivot_longer(-sweep,names_to = "variable", values_to = "value")
+
+#check mean computations
+# df %>% dplyr::filter(sweep=="hard") %>% summarise_all(mean)
+# df %>% dplyr::filter(sweep=="neutral") %>% summarise_all(mean)
+```
+
+```{r}
+pacman::p_load(GGally)
+ggparcoord(data=df,columns = (3):(13),groupColumn="sweep",scale="globalminmax",alphaLines = 0.1) +
+  geom_point(data=mean_values[2:12,],aes(x=variable, y=value, color=sweep),size=3,inherit.aes = F) +
+  geom_point(data=mean_values[69:79,],aes(x=variable, y=value, color=sweep),size=3,inherit.aes = F) 
+```
+
+```{r}
+ggparcoord(data=df,columns = (14):(24),groupColumn="sweep",scale="globalminmax",alphaLines = 0.1) +
+  geom_point(data=mean_values[13:23,],aes(x=variable, y=value, color=sweep),size=3,inherit.aes = F) +
+  geom_point(data=mean_values[80:90,],aes(x=variable, y=value, color=sweep),size=3,inherit.aes = F)
+```
+
+Both Tajima's D and Fay and Wu's H are measures of diversity. Negative values indicate selection. In both cases, we see the statistic have a trough around window 6. This is because the selected mutation is around the middle of the simulated genomes. The mean of the neutral simulations is ~0 which is the expected result under the neutral model (shown analytically). 
+
+#### PCA
+
+```{r}
+pacman::p_load(ggfortify)
+#remove response variables for PCA
+preds<-select(df,-c(sweep,s_coef))
+autoplot(prcomp(preds,scale=T),data=df,colour='sweep')
+```
+
+The hard and neutral data do not separate well. There is more variability in hard sweeps along PC1. 
+
+#### Preprocessing
+
+##### Near Zero Variance Predictors
+
+```{r}
+pacman::p_load(caret)
+```
+
+Check for near zero variance predictors. These are uninformative and can break some models. 
+
+```{r}
+nzv<-nearZeroVar(df,saveMetrics = TRUE)
+head(nzv)
+
+#any problematic variables can be removed as such
+#filter_df<-df[,-nzv]
+```
+
+There are no nzv predictors. 
+
+##### Correlated Predictors
+
+Highly correlated predictors can reduce the performance of some models. We will make the cutoff at 0.6. ie. the highest correlation permitted in the set of predictors is 0.6. 
+
+```{r}
+df_pred<-select(df,-c(sweep,s_coef))
+des_cor<-cor(df_pred)
+high_corr<-findCorrelation(des_cor,cutoff = 0.6)
+filtered_pred<-df_pred[,-high_corr]
+```
+
+Checking our code worked. 
+
+```{r}
+des_cor2<-cor(filtered_pred)
+summary(des_cor2[upper.tri(des_cor2)])
+```
+Highest correlation in the filtered set of predictors is 0.57. Great the code worked. 
+
+##### Linear Combinations
+
+Remove any linear combinations in the data as they would be redundant. 
+
+```{r}
+comboInfo<-findLinearCombos(filtered_pred)
+#filtered_pred<-filtered_pred[,-comboInfo$remove]
+```
+
+No linear combinations found. 
+
+##### Scaling
+
+We will put all the predictors into the same scale so that none would have a disproportionately high effect merely due to the scale it was measured. 
+
+```{r}
+#substract mean and divide by std for each column. Note that we probably want to do this over a row/window. 
+preProcValues<-preProcess(filtered_pred,method=c("center","scale"))
+
+#make new transformed set of training and test data
+dataTransformed<-predict(preProcValues,filtered_pred)
+final_tdata<-cbind(df$sweep,dataTransformed)
+colnames(final_tdata)[1]<-"sweep"
+```
+
+
+We are now ready to partition the data into training and test sets. We randomly assign 80% of the data for training. 
+
+```{r}
+set.seed(911939)
+indices<-createDataPartition(final_tdata$sweep, times=1, p=0.8,list=FALSE)
+
+train_data<-final_tdata[indices,]
+test_data<-final_tdata[-indices,]
+```
+
+We can check that both the training and testing datasets have the same proportions for the response variable sweep. 
+
+```{r}
+prop.table(table(train_data$sweep))
+prop.table(table(test_data$sweep))
+```
+
+#### Model Fitting
+
+We will tune our models using 10 fold cross validation, 3 times for each set of tuning parameters. 
+
+```{r}
+#do 10 fold CV, 3 times for each model
+train.control<-trainControl(method="repeatedcv", number=10, repeats=3,classProbs = TRUE)
+```
+
+We will try logistical regression, random forrests, support vector machines and xgboost (gradient descent method). 
+
+```{r}
+#logistical regression, boosted
+grid<-expand.grid(C=seq(5,20,by=5))
+lrfit<-train(sweep~., data=train_data, method="LogitBoost",
+             nIter=grid,metric="Accuracy",trControl=train.control )
+
+lr.preds<-predict(lrfit, test_data,type="prob") 
+#confusionMatrix(lr.preds, test_data$sweep)
+```
+
+```{r}
+#xgboost
+tune.grid <- expand.grid(eta = c(0.05, 0.075, 0.1), nrounds = c(50, 75, 100),
+                         max_depth = 6,
+                         min_child_weight = c(2.0, 2.25, 2.5), colsample_bytree = c(0.3, 0.4, 0.5), gamma = 0,
+                         subsample = 1)
+
+xg.fit <- train(sweep ~ .,
+                data = train_data,
+                method = "xgbTree", tuneGrid = tune.grid, trControl = train.control)
+
+
+xg.preds<-predict(xg.fit,test_data,type="prob") 
+#confusionMatrix(xg.preds, test_data$sweep)
+```
+
+```{r}
+#SVM (Linear)
+grid<-expand.grid(C=seq(0.5,1.5,by=0.2))
+svm.fit<-train(sweep~., data=train_data,method="svmLinear",
+               tuneGrid=grid,metric="Accuracy",trControl=train.control)
+
+svm.preds<-predict(svm.fit,test_data,type="prob")
+#confusionMatrix(svm.preds,test_data$sweep)
+```
+
+```{r}
+#Random Forest
+
+grid<-expand.grid(mtry=seq(15,35,by=5))
+rf.fit<-train(sweep~.,data=train_data,method="parRF",tuneGrid=grid,metric="Accuracy",trControl=train.control)
+rf.preds<-predict(rf.fit,test_data,type = "prob")
+
+#confusionMatrix(rf.preds,test_data$sweep)
+```
+
+#### Comparing Model Performance
+
+##### ROC
+
+```{r}
+pacman::p_load(yardstick,cowplot)
+#grab the true responses in the test set
+truth<-test_data$sweep
+model_names<-c("lr","xgboost","svm","rf")
+model_preds<-list(lr.preds,xg.preds,svm.preds,rf.preds)
+
+model_eval<-function(model_name,model_pred){
+  data<-as.data.frame(model_pred)
+  ans<-data %>% mutate(model=model_name) %>% cbind(truth)
+  return(ans)
+}
+
+model_list<-list()
+for(i in 1:length(model_names)){
+  model_list[[i]]<-model_eval(model_names[i],model_preds[i])
+}
+model_out<-plyr::ldply(model_list, data.frame)
+```
+
+```{r}
+model_out %>% 
+  #get individual roc curves for each model
+  group_by(model) %>% 
+  roc_curve(truth=truth, estimate=hard) %>%
+  ggplot(
+    aes(x=1-specificity,y=sensitivity,color=model)
+  ) +
+  geom_line(size=1.1) +
+  geom_abline(slope=1, intercept = 0, size=0.2) +
+  #fix aspect ratio to 1:1 for visualization
+  coord_fixed() +
+  theme_cowplot()
+
+```
+
+##### AUC
+
+```{r}
+model_out %>%
+  group_by(model) %>%
+  roc_auc(truth=truth,hard,options = list(smooth = TRUE)) %>%
+  knitr::kable()
+```
+

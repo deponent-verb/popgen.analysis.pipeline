@@ -2,11 +2,13 @@
 pacman::p_load("popgen.tools","tidyverse","ggplot2","GGally","caret")
 
 #read in data
-#hard<-readRDS("~/work/MPhil/data/hard.rds")
-#neutral<-readRDS("~/work/MPhil/data/neutral.rds")
-#soft<-readRDS("~/work/MPhil/data/soft.rds")
-#df<-c(hard,neutral)
-# saveRDS(df,file = "~/work/MPhil/data/toy_data.rds")
+
+hard<-readRDS("~/work/MPhil/data/hard.rds")
+hard2<-readRDS("~/work/MPhil/data/hard2.rds")
+neutral<-readRDS("~/work/MPhil/data/neutral.rds")
+neutral2<-readRDS("~/work/MPhil/data/neutral2.rds")
+data<-c(hard,hard2,neutral,neutral2)
+saveRDS(data,file = "~/work/MPhil/data/toy_data.rds")
 # data<-readRDS("~/work/MPhil/data/toy_data.rds")
 
 #snp distribution----
@@ -37,7 +39,7 @@ df<-generate_df(sim_list = data,win_split = 11,snp=snp_cutoff,form="wide")
 #check if there's any NAs. That would make me sad. 
 apply(df, 2, function(x) any(is.na(x)))
 
-write_csv(df,path="./data/toy_df.csv")
+readr::write_csv(df,path="./data/toy_df.csv")
 
 ## Read in dataframe with raw data
 
