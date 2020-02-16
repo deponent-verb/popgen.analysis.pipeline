@@ -287,7 +287,7 @@ rf.preds<-predict(rf.fit,test_data,type = "prob")
 pacman::p_load(yardstick,cowplot)
 #grab the true responses in the test set
 truth<-test_data$sweep
-model_names<-c("lr","xgboost","svm","rf")
+model_names<-c("logistic regression","xgboost","support vector machine","random forest")
 model_preds<-list(lr.preds,xg.preds,svm.preds,rf.preds)
 
 model_eval<-function(model_name,model_pred){
@@ -315,7 +315,9 @@ model_out %>%
   geom_abline(slope=1, intercept = 0, size=0.2) +
   #fix aspect ratio to 1:1 for visualization
   coord_fixed() +
-  theme_cowplot()
+  theme_cowplot() +
+  xlab("FPR") +
+  ylab("TPR")
 
 ```
 

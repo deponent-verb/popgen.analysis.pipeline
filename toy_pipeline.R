@@ -9,7 +9,7 @@ neutral<-readRDS("~/work/MPhil/data/neutral.rds")
 neutral2<-readRDS("~/work/MPhil/data/neutral2.rds")
 data<-c(hard,hard2,neutral,neutral2)
 saveRDS(data,file = "~/work/MPhil/data/toy_data.rds")
-# data<-readRDS("~/work/MPhil/data/toy_data.rds")
+#data<-readRDS("~/work/MPhil/data/toy_data.rds")
 
 #snp distribution----
 
