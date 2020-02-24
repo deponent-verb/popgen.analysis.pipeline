@@ -1,0 +1,274 @@
+---
+title: "tutorial_tidymodels"
+author: "Anthony Kwong (a1708050)"
+date: "23/02/2020"
+output: pdf_document
+---
+
+# Introduction
+
+We will analyse some simulated genomes using the tidymodels framework. For more information about how the data was generated, see the caret tutorial in the vignette directory. 
+
+```{r,echo=FALSE,warning=FALSE}
+library(tidymodels)
+```
+
+```{r}
+data<-read.csv("../data/toy_df.csv")
+#remove ID column
+data<-subset(data,select=-c(ID,s_coef))
+```
+
+Check the variables are the correct type. 
+
+```{r}
+#rmarkdown doesn't output because of a unicode character issue
+#skimr::skim(data)
+```
+
+Check for NAs.
+
+```{r}
+apply(data, 2, function(x) any(is.na(x)))
+```
+
+
+# Preprocessing
+
+Partition data into training (80%) and testing set (20%). 
+```{r}
+genome_split<-initial_split(data,prop=0.8)
+#To check the two sets
+#training(genomes_split)%>%glimpse()
+#testing(genomes_split)%>%glimpse()
+```
+
+Set up a set of transformations using recipes. 
+
+```{r}
+genome_recipe<-recipe(sweep~., data=training(genome_split)) %>%
+  #remove highly correlated predictors
+  step_corr(all_predictors(),threshold = 0.8) %>%
+  #make all predictors have mean 0
+  step_center(all_predictors(),-all_outcomes()) %>%
+  #all predictors have variance 1
+  step_scale(all_predictors(),-all_outcomes()) %>%
+  #apply recipe to training set
+  prep()
+```
+
+Look at what transformations were applied. 
+
+```{r}
+genome_recipe
+```
+
+Extract transformed dataframe via juice. 
+
+```{r}
+genome_training<-juice(genome_recipe)
+```
+
+Transform test set using bake. 
+
+```{r}
+genome_testing<-bake(genome_recipe,testing(genome_split))
+```
+
+# Model Fitting
+
+We will select our tuning parameters using 10-fold cross validation. Note that we partition the untransformed training set. 
+
+```{r}
+set.seed(1453)
+cv_splits<-vfold_cv(training(genome_split),v=10,strata="sweep")
+```
+
+## Logistic Regression
+
+Define a logisticial regression model with L2 regularisation. 
+
+```{r}
+genome_lr<-logistic_reg(
+  mode="classification",
+  penalty=tune(),
+  mixture=1
+) %>%
+  set_engine("glmnet")
+```
+
+Define grid of tuning params. 
+
+```{r}
+lr_grid<-grid_regular(penalty(range=c(0.1,10)), levels=5,original=F)
+```
+
+Fit model. 
+
+```{r}
+lr_res<-tune_grid(genome_recipe,model=genome_lr,resamples=cv_splits,grid=lr_grid)
+```
+
+```{r}
+lr_res %>%
+  collect_metrics()
+```
+
+```{r}
+highest_acc<-lr_res %>% 
+  select_best(metric="accuracy") 
+final_lr<-finalize_model(genome_lr,highest_acc) %>%
+  fit(sweep~., data=genome_training)
+```
+
+
+## Random Forest
+
+We fit a random forest model with 2 tuning parameters, namely mtry and min_n. The range argument is used to set the upper and lower bounds for each parameter. Levels indicate the number of values for each param to use for the grid. The "best" set of tuning parameters is determined via grid search. 
+
+```{r}
+rf_grid<-grid_regular(mtry(range=c(6,44)),min_n(range=c(20,40)),levels=5)
+```
+
+Define a random forest model for classification. Tuning parameters are designated via tune. The implementation from the randomForest package is used. 
+
+```{r}
+#Define rf model
+genome_rf<-rand_forest(
+  mode="classification",
+  mtry=tune(),
+  trees=500,
+  min_n=tune()
+) %>%
+  set_engine("randomForest")
+```
+
+Fit model via tune_grid. 
+
+```{r}
+rf_res<-tune_grid(genome_recipe,model=genome_rf,resamples=cv_splits,grid=rf_grid)
+```
+
+Check the tuning results.
+
+```{r}
+rf_res %>% 
+  collect_metrics()
+```
+
+Let's look at the best models by accuracy (lowest misclass rate).
+
+```{r}
+rf_res %>%
+  show_best("accuracy")
+```
+
+Extract the tuning params with the highest cross validation accuracy. Then we train the model with these tuning params on the whole prepped training data.
+
+```{r}
+highest_acc<-rf_res %>% 
+  select_best(metric="accuracy")
+final_rf<-finalize_model(genome_rf,highest_acc) %>%
+  fit(sweep~., data=genome_training)
+```
+
+## Support Vector Machine
+
+Define a svm with polynomial kernel. Set tuning parameters to be cost and degree.
+
+```{r}
+genome_svm<-svm_poly(
+  mode="classification",
+  cost=tune(),
+  degree=tune()
+) %>%
+  set_engine("kernlab")
+```
+
+```{r}
+svm_grid<-grid_regular(cost(range=c(5,7)),degree(),levels=3,original = T)
+```
+
+```{r}
+svm_res<-tune_grid(genome_recipe,model=genome_svm,resamples=cv_splits,grid=svm_grid)
+```
+
+Extract the best model by accuracy. 
+
+```{r}
+highest_acc<-svm_res %>%
+  select_best(metric="accuracy")
+best_svm<-finalize_model(genome_svm,highest_acc)
+final_svm<-best_svm %>%
+  fit(sweep~., data=genome_training)
+```
+
+
+# Model Assessment
+
+Evaluate models with the transformed (ie. baked) testing set. Here are the confusion matrices using the default cutoff of 0.5. 
+
+```{r}
+rf_pred<-predict(final_rf,genome_testing)%>%
+  bind_cols(tibble::enframe(genome_testing$sweep))
+conf_mat(rf_pred,truth=value,estimate = .pred_class)
+```
+
+```{r}
+lr_pred<-predict(final_lr,genome_testing)%>%
+  bind_cols(tibble::enframe(genome_testing$sweep))
+conf_mat(lr_pred,truth=value,estimate = .pred_class)
+```
+
+```{r}
+svm_pred<-predict(final_svm,genome_testing)%>%
+  bind_cols(tibble::enframe(genome_testing$sweep))
+conf_mat(svm_pred,truth=value,estimate = .pred_class)
+```
+
+## ROC 
+
+```{r}
+#get soft classifications
+rf_pred<-predict(final_rf,genome_testing,type="prob")
+lr_pred<-predict(final_lr,genome_testing,type="prob")
+svm_pred<-predict(final_svm,genome_testing,type="prob")
+```
+
+
+```{r}
+pacman::p_load(cowplot)
+#grab true responses in test set
+truth<-genome_testing$sweep
+model_names<-c("logistic regression","random forest","support vector machine")
+model_preds<-list(rf_pred,lr_pred,svm_pred)
+
+model_eval<-function(model_name,model_pred){ 
+  data<-as.data.frame(model_pred)
+  ans<-data %>% mutate(model=model_name) %>% cbind(truth) 
+  return(ans)
+}
+
+
+model_list<-list()
+for(i in 1:length(model_names)){
+  model_list[[i]]<-model_eval(model_names[i],model_preds[i]) 
+}
+model_out<-plyr::ldply(model_list, data.frame)
+
+model_out %>%
+#get individual roc curves for each model 
+  group_by(model) %>% 
+  roc_curve(truth=truth, estimate=.pred_hard) %>% 
+  ggplot(
+aes(x=1-specificity,y=sensitivity,color=model) 
+)+
+geom_line(size=1.1) +
+geom_abline(slope=1, intercept = 0, size=0.2) +
+#fix aspect ratio to 1:1 for visualization coord_fixed() +
+theme_cowplot() +
+xlab("FPR") +
+ylab("TPR")
+
+```
+
