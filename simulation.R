@@ -29,7 +29,7 @@ selection=c(0,0.001, 0.01)
 
 ## Simulation Loops ----
 
-nsim=100
+nsim=1000
 setwd("~/work/MPhil/data/batch_data/")
 sweep_type="hard"
 
@@ -52,7 +52,7 @@ for(s in selection){
 }
 b=Sys.time()
 
-
+#1000 sims each, took ~3.6 hours
 
 
 
