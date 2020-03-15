@@ -87,7 +87,7 @@ genome_SS_long %>%
 
 labs  <- glue::glue("h1[{1:11}]")
 genome_SS_long %>% 
-  filter(str_detect(name, "h1")) %>% 
+  filter(str_detect(name, "h1_")) %>% 
   mutate(name = factor(name, levels = str_c("h1_", 1:11))) %>% 
   ggplot(aes(x = name, y = value, col = s_coef)) + 
   geom_line(aes(group = ID), alpha = 0.01) + 

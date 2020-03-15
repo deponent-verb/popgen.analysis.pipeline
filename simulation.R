@@ -21,7 +21,20 @@ start_f=0.1
 
 # Bottleneck scenarios.
 
-bottlenecks = tibble::tibble(size=c(0.5,1),time=c(5,10))
+bottlenecks = list()
+recovery = c(1600, 8000)
+duration = c(80, 800, 8000)
+strength = c(0.05, 0.1, 0.5)
+
+counter=1
+for(r in recovery){
+  for(d in duration){
+    for(s in strength){
+      bottlenecks[[counter]] = tibble::tibble(size=c(s,1),time=c(d+r,r))
+      counter=counter+1
+    }
+  }
+}
 
 # selection coefficients ----
 
@@ -29,8 +42,8 @@ selection=c(0,0.001, 0.01)
 
 ## Simulation Loops ----
 
-nsim=1000
-setwd("~/work/MPhil/data/batch_data/")
+nsim=1
+setwd("~/work/MPhil/data/test/")
 sweep_type="hard"
 
 #loop for hard sweeps
@@ -38,16 +51,22 @@ sweep_type="hard"
 doParallel::registerDoParallel()
 a=Sys.time()
 for(s in selection){
-#  print(s)
-  for(i in 1:nsim){
-#    print(s)
-    sim = discoal_sim(mu=mu,recomb_rate = recomb_rate, Ne = Ne,
-                genome_length = nBases, samplesize = samplesize,
-                s = s, discoal_path = discoal_path,
-                sweep=sweep_type, fix_time = 1)
-    name = paste("hardsim_s",s,"_n",i,".rds",sep="")
-#    print(name)
-    saveRDS(sim,file=name)
+  #  print(s)
+  for(b in bottlenecks){
+    for(i in 1:nsim){
+      # print(b$size[1])
+      # print(b$time[1])
+      # print(b$time[2])
+      # print(s)
+      sim = discoal_sim(mu=mu,recomb_rate = recomb_rate, Ne = Ne,
+                        genome_length = nBases, samplesize = samplesize,
+                        s = s, discoal_path = discoal_path,
+                        sweep=sweep_type, fix_time = 1, popsize_changes = b)
+      name = paste("hardsim_s",s,"_n",i,"_b",b$size[1],"_t1",b$time[1],"_t2",b$time[2],
+                   ".rds",sep="")
+      print(name)
+      saveRDS(sim,file=name)
+    }
   }
 }
 b=Sys.time()
