@@ -3,7 +3,7 @@ library(tidymodels)
 
 #exploratory data analysis
 
-df<-read_csv("~/work/MPhil/data/dataframes/only_bottleneck.csv")
+df<-read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/bt_cpop.csv")
 df$sweep = as.factor(df$sweep)
 df$s_coef=as.factor(df$s_coef)
 
@@ -96,10 +96,10 @@ genome_SS_long %>%
   labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
   scale_x_discrete(labels = parse(text = labs))
 
-labs  <- glue::glue("h12[{1:11}]")
+labs  <- glue::glue("h2[{1:11}]")
 genome_SS_long %>% 
-  filter(str_detect(name, "h12")) %>% 
-  mutate(name = factor(name, levels = str_c("h12_", 1:11))) %>% 
+  filter(str_detect(name, "h2")) %>% 
+  mutate(name = factor(name, levels = str_c("h2_", 1:11))) %>% 
   ggplot(aes(x = name, y = value, col = sweep)) + 
   geom_line(aes(group = ID), alpha = 0.01) + 
   geom_smooth(aes(group = sweep), se = FALSE) + 

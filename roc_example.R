@@ -57,7 +57,7 @@ models_out %>%
 
 a<-model_out %>%
   group_by(model) %>%
-  roc_auc(truth=truth,hard,options = list(smooth = TRUE))
+  roc_auc(truth=truth,.pred_hard,options = list(smooth = TRUE))
 
 knitr::kable(a)
 
