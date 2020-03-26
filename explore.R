@@ -3,13 +3,13 @@ library(tidymodels)
 
 #exploratory data analysis
 
-df<-read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/constant_pop.csv")
+df<-read_csv("~/work/MPhil/data/dataframes/only_bottleneck.csv")
 df$sweep = as.factor(df$sweep)
 df$s_coef=as.factor(df$s_coef)
 
 #Data cleaning. Take out bottleneck info for now. 
 genome_SS  <- df %>% 
-  select(s_coef, H_1:h123_11)
+  select(sweep, H_1:h123_11)
 genome_SS
 
 #PCA
@@ -18,14 +18,14 @@ genome_SS
 
 genome_PCA_all  <- 
   df %>% 
-  select(s_coef, H_1:h123_11) %>% 
-  recipe(s_coef ~ .) %>% 
+  select(sweep, H_1:h123_11) %>% 
+  recipe(sweep ~ .) %>% 
   step_pca(all_predictors(), num_comp = 2) %>% 
   prep(training = genome_SS) %>% 
   bake(new_data = genome_SS )
 
 genome_PCA_all %>% 
-  ggplot(aes(x = PC1, y = PC2, col = s_coef)) + 
+  ggplot(aes(x = PC1, y = PC2, col = sweep)) + 
   geom_point(alpha = 0.3) + 
   geom_density_2d() + 
   scale_color_brewer(palette = "Set1") +
@@ -39,14 +39,14 @@ factoextra::fviz_eig(gpca)
 
 genome_PCA_6  <- 
   df %>% 
-  select(s_coef, H_6, D_6, h1_6) %>% 
-  recipe(s_coef ~ .) %>% 
+  select(sweep, H_6, D_6, h1_6) %>% 
+  recipe(sweep ~ .) %>% 
   step_pca(all_predictors(), num_comp = 2) %>% 
   prep(training = genome_SS) %>% 
   bake(new_data = genome_SS )
 
 genome_PCA_6 %>% 
-  ggplot(aes(x = PC1, y = PC2, col = s_coef)) + 
+  ggplot(aes(x = PC1, y = PC2, col = sweep)) + 
   geom_point(alpha = 0.3) + 
   geom_density_2d() + 
   scale_color_brewer(palette = "Set1")+
@@ -56,7 +56,7 @@ genome_PCA_6 %>%
 #Parallel Coordinates Plot
 
 genome_SS <- df %>%
-  select(ID, s_coef,H_1:h123_11)
+  select(ID, sweep,H_1:h123_11)
 
 #convert to long form
 genome_SS_long = 
@@ -67,9 +67,9 @@ labs  <- glue::glue("D[{1:11}]")
 genome_SS_long %>% 
   filter(str_detect(name, "D")) %>% 
   mutate(name = factor(name, levels = str_c("D_", 1:11))) %>% 
-  ggplot(aes(x = name, y = value, col = s_coef)) + 
+  ggplot(aes(x = name, y = value, col = sweep)) + 
   geom_line(aes(group = ID), alpha = 0.01) + 
-  geom_smooth(aes(group = s_coef), se = FALSE) + 
+  geom_smooth(aes(group = sweep), se = FALSE) + 
   scale_color_brewer(palette = "Set1") + 
   labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
   scale_x_discrete(labels = parse(text = labs))
@@ -78,9 +78,9 @@ labs  <- glue::glue("H[{1:11}]")
 genome_SS_long %>% 
   filter(str_detect(name, "H")) %>% 
   mutate(name = factor(name, levels = str_c("H_", 1:11))) %>% 
-  ggplot(aes(x = name, y = value, col = s_coef)) + 
+  ggplot(aes(x = name, y = value, col = sweep)) + 
   geom_line(aes(group = ID), alpha = 0.01) + 
-  geom_smooth(aes(group = s_coef), se = FALSE) + 
+  geom_smooth(aes(group = sweep), se = FALSE) + 
   scale_color_brewer(palette = "Set1") + 
   labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
   scale_x_discrete(labels = parse(text = labs))
@@ -89,9 +89,9 @@ labs  <- glue::glue("h1[{1:11}]")
 genome_SS_long %>% 
   filter(str_detect(name, "h1_")) %>% 
   mutate(name = factor(name, levels = str_c("h1_", 1:11))) %>% 
-  ggplot(aes(x = name, y = value, col = s_coef)) + 
+  ggplot(aes(x = name, y = value, col = sweep)) + 
   geom_line(aes(group = ID), alpha = 0.01) + 
-  geom_smooth(aes(group = s_coef), se = FALSE) + 
+  geom_smooth(aes(group = sweep), se = FALSE) + 
   scale_color_brewer(palette = "Set1") + 
   labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
   scale_x_discrete(labels = parse(text = labs))
@@ -100,9 +100,9 @@ labs  <- glue::glue("h12[{1:11}]")
 genome_SS_long %>% 
   filter(str_detect(name, "h12")) %>% 
   mutate(name = factor(name, levels = str_c("h12_", 1:11))) %>% 
-  ggplot(aes(x = name, y = value, col = s_coef)) + 
+  ggplot(aes(x = name, y = value, col = sweep)) + 
   geom_line(aes(group = ID), alpha = 0.01) + 
-  geom_smooth(aes(group = s_coef), se = FALSE) + 
+  geom_smooth(aes(group = sweep), se = FALSE) + 
   scale_color_brewer(palette = "Set1") + 
   labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
   scale_x_discrete(labels = parse(text = labs))

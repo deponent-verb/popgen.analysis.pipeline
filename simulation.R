@@ -38,15 +38,15 @@ for(r in recovery){
 
 # selection coefficients ----
 
-selection=c(0,0.001, 0.01)
+selection=c(0,100,250,500,750,1000,2000)/(2*Ne)
 
 ## Simulation Loops ----
 
-nsim=1
+nsim=100
 setwd("~/work/MPhil/data/test/")
 sweep_type="hard"
 
-#loop for hard sweeps
+#loop for hard sweeps, with bottlenecks
 
 doParallel::registerDoParallel()
 a=Sys.time()
@@ -71,7 +71,23 @@ for(s in selection){
 }
 b=Sys.time()
 
-#1000 sims each, took ~3.6 hours
+# constant popsize simulations
+
+doParallel::registerDoParallel()
+a=Sys.time()
+for(s in selection){
+    for(i in 1:nsim){
+      sim = discoal_sim(mu=mu,recomb_rate = recomb_rate, Ne = Ne,
+                        genome_length = nBases, samplesize = samplesize,
+                        s = s, discoal_path = discoal_path,
+                        sweep=sweep_type, fix_time = 1)
+      name = paste("hardsim_s",s,"_n",i,"constant_pop",
+                   ".rds",sep="")
+      print(name)
+      saveRDS(sim,file=name)
+    }
+}
+b=Sys.time()
 
 
 
