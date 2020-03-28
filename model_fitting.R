@@ -15,21 +15,29 @@ skimr::skim(genomes_SS)
 
 #Partition dataset
 genome_split<-initial_split(genomes_SS,prop=0.8)
+genome_train = training (genome_split)
+genome_test = testing (genome_split)
 
 #Preprocessing ----
 
 #Standardize H and D. We don't transform the haplotype stats as they are already between 0,1. 
 
-genomes_recipe <- recipe(sweep ~., data=training(genome_split)) %>%
+genomes_recipe <- recipe(sweep ~., data=genome_train) %>%
   step_corr(all_predictors(),threshold = 0.8) %>%
   step_center(starts_with("H"),starts_with("D")) %>%
   step_scale(starts_with("H"),starts_with("D")) %>%
   prep()
 
+genomes_recipe2 <- recipe (sweep ~., data= genome_train) %>%
+  step_corr(all_predictors(),threshold = 0.8) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors()) %>%
+  prep()
+
 genomes_recipe
 
-genome_training <- bake(genomes_recipe, training(genome_split))
-genome_testing<-bake(genomes_recipe,testing(genome_split))
+# genome_training <- bake(genomes_recipe, training(genome_split))
+# genome_testing<-bake(genomes_recipe,testing(genome_split))
 
 #Model Fitting ----
 
@@ -40,6 +48,8 @@ cv_splits<-vfold_cv(training(genome_split),v=10,strata="sweep")
 
 #Logistical Regression with L2 regularisation ----
 
+#workflows method
+
 genome_lr = logistic_reg(
   mode="classification",
   penalty = tune(),
@@ -47,22 +57,35 @@ genome_lr = logistic_reg(
 ) %>%
   set_engine("glmnet")
 
-lr_grid = grid_regular(penalty(range=c(0,50)),
-                       levels=50, 
+lr_grid = grid_regular(penalty(range=c(0,0.2)),
+                       levels=100, 
                        original = F)
 
-lr_res = tune_grid(genomes_recipe,
-                   model=genome_lr,
+wkfl = workflow() %>%
+  add_recipe(genomes_recipe) %>%
+  add_model(genome_lr)
+
+lr_res = tune_grid(wkfl,
                    resamples = cv_splits,
-                   grid=lr_grid)
+                   grid = lr_grid, 
+                   metrics=metric_set(accuracy),
+                   control=control_grid(save_pred = TRUE))
 
-collect_metrics(lr_res)
+#cv accuracy of each LR model
+lr_metrics = collect_metrics(lr_res)
 
+#plot cv accuracy as a function of tuning params
+ggplot(data= lr_metrics,
+       aes(x=penalty, y=mean)) +
+  geom_point()
+
+#select tuning param with highest cv accuracy
 best_tuning = lr_res %>% 
   select_best(metric="accuracy")
 
-final_lr = finalize_model(genome_lr, best_tuning) %>%
-  fit(sweep~., data=genome_training)
+wkfl_best = finalize_workflow(wkfl,best_tuning)
+
+final_lr = fit(wkfl_best, data = genome_train )
 
 # Random Forest----
 
@@ -71,7 +94,7 @@ rf_grid<-grid_regular(mtry(range=c(10,30)),min_n(range=c(20,40)),levels=5)
 genome_rf<-rand_forest(
   mode="classification",
   mtry=tune(),
-  trees=500,
+  trees=50,
   min_n=tune()
 ) %>%
   set_engine("randomForest")
@@ -122,7 +145,7 @@ final_svm<-finalize_model(genome_svm,best_tuning) %>%
 
 #obtain soft classification on testing set
 rf_pred<-predict(final_rf,genome_testing,type="prob")
-lr_pred<-predict(final_lr,genome_testing,type="prob")
+lr_pred<-predict(final_lr,genome_test,type="prob")
 svm_pred<-predict(final_svm,genome_testing,type="prob")
 model_preds = list(lr_pred, rf_pred, svm_pred )
 
