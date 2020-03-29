@@ -14,6 +14,7 @@ genomes_SS$sweep = as.factor(genomes_SS$sweep)
 skimr::skim(genomes_SS)
 
 #Partition dataset
+set.seed(1707)
 genome_split<-initial_split(genomes_SS,prop=0.8)
 genome_train = training (genome_split)
 genome_test = testing (genome_split)
@@ -28,11 +29,11 @@ genomes_recipe <- recipe(sweep ~., data=genome_train) %>%
   step_scale(starts_with("H"),starts_with("D")) %>%
   prep()
 
-genomes_recipe2 <- recipe (sweep ~., data= genome_train) %>%
-  step_corr(all_predictors(),threshold = 0.8) %>%
-  step_center(all_predictors()) %>%
-  step_scale(all_predictors()) %>%
-  prep()
+# genomes_recipe2 <- recipe (sweep ~., data= genome_train) %>%
+#   step_corr(all_predictors(),threshold = 0.8) %>%
+#   step_center(all_predictors()) %>%
+#   step_scale(all_predictors()) %>%
+#   prep()
 
 genomes_recipe
 
@@ -44,7 +45,7 @@ genomes_recipe
 #Pick tuning params based on 10-fold CV
 
 set.seed(1688)
-cv_splits<-vfold_cv(training(genome_split),v=10,strata="sweep")
+cv_splits<-vfold_cv(genome_train,v=10,strata="sweep")
 
 #Logistical Regression with L2 regularisation ----
 
@@ -62,14 +63,17 @@ lr_grid = grid_regular(penalty(range=c(0,0.2)),
                        original = F)
 
 wkfl = workflow() %>%
-  add_recipe(genomes_recipe) %>%
-  add_model(genome_lr)
+  add_recipe(genomes_recipe)
 
-lr_res = tune_grid(wkfl,
+wkfl_lr= wkfl %>% add_model(genome_lr)
+
+lr_start= Sys.time()
+lr_res = tune_grid(wkfl_lr,
                    resamples = cv_splits,
                    grid = lr_grid, 
                    metrics=metric_set(accuracy),
                    control=control_grid(save_pred = TRUE))
+lr_fin = Sys.time()
 
 #cv accuracy of each LR model
 lr_metrics = collect_metrics(lr_res)
@@ -83,13 +87,14 @@ ggplot(data= lr_metrics,
 best_tuning = lr_res %>% 
   select_best(metric="accuracy")
 
-wkfl_best = finalize_workflow(wkfl,best_tuning)
+wkfl_best = finalize_workflow(wkfl_lr,best_tuning)
 
 final_lr = fit(wkfl_best, data = genome_train )
 
 # Random Forest----
 
-rf_grid<-grid_regular(mtry(range=c(10,30)),min_n(range=c(20,40)),levels=5)
+rf_grid<-grid_regular(mtry(range=c(1,30)),min_n(range=c(1,200)),levels=10)
+
 
 genome_rf<-rand_forest(
   mode="classification",
@@ -99,61 +104,127 @@ genome_rf<-rand_forest(
 ) %>%
   set_engine("randomForest")
 
-doParallel::registerDoParallel()
-a = Sys.time()
-rf_res<-tune_grid(genomes_recipe,
-                  model=genome_rf,
-                  resamples=cv_splits,
-                  grid=rf_grid)
-b = Sys.time()
+wkfl_rf = wkfl %>% add_model(genome_rf)
 
+doParallel::registerDoParallel()
+rf_start = Sys.time()
+
+rf_res = tune_grid(wkfl_rf,
+                  resamples=cv_splits,
+                  grid=rf_grid,
+                  metrics = metric_set(accuracy),
+                  control=control_grid(save_pred = TRUE))
+
+rf_end = Sys.time()
+
+rf_metrics = collect_metrics(rf_res)
+
+#plot cv accuracy as function of tuning params
+
+rf_df = rf_metrics %>% 
+  select(mtry,min_n,mean) 
+
+rf_df$quart = cut(rf_df$mean, quantile(rf_df$mean), include.lowest = T)
+
+ggplot(rf_df,aes(x = mtry, y = min_n, color = factor(quart))) +
+  geom_point()
+
+#get best rf model
 best_tuning = rf_res %>% 
   select_best(metric="accuracy")
 
-final_rf = finalize_model(genome_rf, best_tuning) %>%
-  fit(sweep~., data=genome_training)
+wkfl_best_rf = finalize_workflow(wkfl_rf, best_tuning)
 
+final_rf = fit( wkfl_best_rf, data= genome_train)
 
 #SVM ----
 
 genome_svm<-svm_poly(
   mode="classification",
   cost=tune(),
-  degree=tune()
+  degree=1
 ) %>%
   set_engine("kernlab")
 
-svm_grid<-grid_regular(cost(range=c(7,9)),
-                       degree(),
-                       levels=3,
-                       original = T)
+# svm_grid<-grid_regular(cost(range=c(50,550)),
+#                        levels=10,
+#                        original = F)
+
+svm_grid = tibble(cost = seq(0,70,by=2))
+
+wkfl_svm = wkfl %>%
+  add_model(genome_svm)
 
 doParallel::registerDoParallel()
-svm_res<-tune_grid(genomes_recipe,
-                   model=genome_svm,
-                   resamples=cv_splits,
-                   grid=svm_grid)
+svm_start = Sys.time()
+svm_res = tune_grid(wkfl_svm,
+                    resamples = cv_splits,
+                    grid = svm_grid,
+                    metrics = metric_set(accuracy),
+                    control = control_grid(save_pred = T))
 
-best_tuning<-svm_res %>%
-  select_best(metric="accuracy")
+svm_end = Sys.time()
 
-final_svm<-finalize_model(genome_svm,best_tuning) %>%
-  fit(sweep~., data=genome_training)
+svm_metrics = collect_metrics(svm_res)
 
+ggplot(data = svm_metrics,
+       aes( x = cost, y = mean)) +
+       geom_line()
+
+#get best svm
+best_tuning = svm_res %>% 
+  select_best(metric = "accuracy")
+
+wkfl_best_svm = finalize_workflow( wkfl_svm , best_tuning)
+
+final_svm = fit (wkfl_best_svm , data = genome_train)
+
+# KNN model ----
+
+genome_knn = nearest_neighbor(
+  mode = "classification",
+  neighbors= tune(),
+  weight_func = "epanechnikov", 
+  dist_power = 1
+) %>%
+  set_engine("kknn")
+
+knn_grid = tibble(neighbors= seq(1, 151 , by = 5))
+
+wkfl_knn = wkfl %>%
+  add_model(genome_knn)
+
+doParallel::registerDoParallel()
+knn_start=Sys.time()
+
+knn_res = tune_grid(
+  wkfl_knn,
+  resamples = cv_splits, 
+  grid = knn_grid, 
+  metrics = metric_set(accuracy),
+  control = control_grid(save_pred = TRUE)
+)
+knn_fin = Sys.time()
+
+knn_metrics = collect_metrics(knn_res)
+
+ggplot( data = knn_metrics , 
+        aes( x = neighbors, y = mean)) +
+  geom_point()
 
 # Model Assessment
 
 #obtain soft classification on testing set
-rf_pred<-predict(final_rf,genome_testing,type="prob")
+rf_pred<-predict(final_rf,genome_test,type="prob")
 lr_pred<-predict(final_lr,genome_test,type="prob")
-svm_pred<-predict(final_svm,genome_testing,type="prob")
+svm_pred<-predict(final_svm,genome_test,type="prob")
 model_preds = list(lr_pred, rf_pred, svm_pred )
 
 model_names<-c("logistic regression","random forest","support vector machine")
 
 pacman::p_load(cowplot)
 #grab true responses in test set
-truth<-genome_testing$sweep
+truth<-genome_test$sweep
 
 model_eval<-function(model_name,model_pred,truth){ 
   data<-as.data.frame(model_pred)
