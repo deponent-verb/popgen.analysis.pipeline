@@ -129,6 +129,40 @@ rf_df$quart = cut(rf_df$mean, quantile(rf_df$mean), include.lowest = T)
 ggplot(rf_df,aes(x = mtry, y = min_n, color = factor(quart))) +
   geom_point()
 
+ggplot(rf_df,aes(x = mtry, y = min_n, z = mean)) +
+  geom_density_2d()
+
+#3d plot for better visualisation
+
+x = rf_grid$mtry %>% unique()
+y = rf_grid$min_n %>% unique()
+n1 = length(x)
+n2 = length(y)
+cv = matrix(0, n1, n2)
+
+
+for(i in 1:n1){
+  for(j in 1:n2){
+    print(i)
+    print(j)
+    row = rf_metrics %>% filter(mtry==x[i], min_n==y[j])
+    cv[i,j] = row$mean
+  }
+}
+
+fig = plot_ly(x = ~x, y = ~y,z = ~cv) %>% 
+  add_surface()
+
+fig = fig %>% layout(
+  title = "CV accuracy as a function of RF tuning params",
+  scene = list(
+    xaxis = list(title = "mtry"),
+    yaxis = list (title = "min_n")
+  )
+)
+
+fig
+
 #get best rf model
 best_tuning = rf_res %>% 
   select_best(metric="accuracy")
