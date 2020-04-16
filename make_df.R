@@ -3,8 +3,8 @@ pacman::p_load(popgen.tools,tidyverse)
 
 #Read all rds files in a directory
 
-setwd("~/work/MPhil/data/test/")
-names= list.files(pattern=".rds")
+setwd("~/work/MPhil/ml_review/data/bottleneck_sims(hard)/")
+names= list.files(pattern=".rds")[1:10]
 genomes = lapply(names, readRDS)
 
 #generate dataframe
@@ -30,11 +30,19 @@ snp_cutoff<-low_mean-2*low_std #2240
 #let's just try 1000 for now
 snp_cutoff=1000
 
+####
+doParallel::registerDoParallel()
+a=Sys.time()
+df<-generate_df(sim_list = genomes,nwins = 11,
+                split_type="base",snp=1000,form="wide")
+b=Sys.time()
+####
 #make dataframe
 
 doParallel::registerDoParallel()
 a=Sys.time()
-df<-generate_df(sim_list = genomes,nwins = 11,snp=snp_cutoff,form="wide")
+df<-generate_df(sim_list = genomes,nwins = 11,snp=snp_cutoff,form="wide",
+                LD_downsample = T, ds_prop = 0.1, ds_seed = 1)
 b=Sys.time()
 apply(df, 2, function(x) any(is.na(x)))
 #readr::write_csv(df,path="~/Documents/GitHub/popgen.analysis.pipeline/data/bottleneck.csv")

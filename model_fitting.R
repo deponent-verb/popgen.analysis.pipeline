@@ -91,6 +91,27 @@ wkfl_best = finalize_workflow(wkfl_lr,best_tuning)
 
 final_lr = fit(wkfl_best, data = genome_train )
 
+#variables of importance
+
+final_lr %>% 
+  pull_workflow_fit() %>%
+  tidy()
+
+final_lr %>%
+  pull_workflow_fit() %>%
+  vi() %>%
+  mutate(
+    Importance = abs(Importance),
+    Variable = fct_reorder(Variable, Importance)
+  ) %>%
+  ggplot(aes(x=Importance, y = Variable, fill=Sign)) +
+  geom_col() + 
+  scale_x_continuous(expand = c(0,0)) + 
+  labs(y=NULL) + 
+  ggtitle("Logistic Regression VoI")
+  
+
+
 # Random Forest----
 
 rf_grid<-grid_regular(mtry(range=c(1,30)),min_n(range=c(1,200)),levels=10)
@@ -171,6 +192,26 @@ wkfl_best_rf = finalize_workflow(wkfl_rf, best_tuning)
 
 final_rf = fit( wkfl_best_rf, data= genome_train)
 
+# RF VIP
+
+final_rf %>% 
+  pull_workflow_fit() %>%
+  tidy()
+
+final_rf %>%
+  pull_workflow_fit() %>%
+  vi() %>%
+  mutate(
+    Importance = abs(Importance),
+    Variable = fct_reorder(Variable, Importance)
+  ) %>%
+  ggplot(aes(x=Importance, y = Variable)) +
+  geom_col() + 
+  scale_x_continuous(expand = c(0,0)) + 
+  labs(y=NULL) + 
+  ggtitle("RF VoI")
+
+
 #SVM ----
 
 genome_svm<-svm_poly(
@@ -245,6 +286,7 @@ knn_metrics = collect_metrics(knn_res)
 ggplot( data = knn_metrics , 
         aes( x = neighbors, y = mean)) +
   geom_point()
+
 
 # Model Assessment
 

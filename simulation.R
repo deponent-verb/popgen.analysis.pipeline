@@ -39,11 +39,12 @@ for(r in recovery){
 # selection coefficients ----
 
 selection=c(0,100,250,500,750,1000,2000)/(2*Ne)
+#selection=0
 
 ## Simulation Loops ----
 
-nsim=100
-setwd("~/work/MPhil/data/test/")
+nsim=600
+setwd("~/work/MPhil/data/bottleneck_sims(neutral)/")
 sweep_type="hard"
 
 #loop for hard sweeps, with bottlenecks
