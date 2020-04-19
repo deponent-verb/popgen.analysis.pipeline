@@ -1,4 +1,4 @@
-pacman::p_load(popgen.tools)
+pacman::p_load(popgen.tools,parallel,foreach)
 #simulate training data for analysis
 
 # Species Model (Human) ----
@@ -74,22 +74,34 @@ b=Sys.time()
 
 # constant popsize simulations
 
-doParallel::registerDoParallel()
+nsim=600
+setwd("~/work/MPhil/ml_review/data/constantpop/")
+sweep_type="hard"
+
+cores=detectCores()
+cl<-makeCluster(cores)
+
+doParallel::registerDoParallel(cl,cores = cores)
+
 a=Sys.time()
-for(s in selection){
-    for(i in 1:nsim){
-      sim = discoal_sim(mu=mu,recomb_rate = recomb_rate, Ne = Ne,
+foreach(s = 1:length(selection)) %dopar% {
+    for(i in 101:(nsim+100)) {
+      sim = popgen.tools::discoal_sim(mu=mu,recomb_rate = recomb_rate, Ne = Ne,
                         genome_length = nBases, samplesize = samplesize,
-                        s = s, discoal_path = discoal_path,
+                        s = selection[s], discoal_path = discoal_path,
                         sweep=sweep_type, fix_time = 1)
-      name = paste("hardsim_s",s,"_n",i,"constant_pop",
+      name = paste("hardsim_s",selection[s],"_n",i,"constant_pop",
                    ".rds",sep="")
       print(name)
       saveRDS(sim,file=name)
     }
 }
+
 b=Sys.time()
 
+# foreach(s = 1:length(selection)) %dopar% {
+#   print(selection[s])
+# }
 
 
 

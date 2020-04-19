@@ -24,7 +24,7 @@ a=Sys.time()
 
 #Read all rds files in a directory
 
-setwd("/fast/users/a1708050/mphil/ml_review/data/bottleneck_sims(hard)")
+setwd("/fast/users/a1708050/mphil/ml_review/data/bottleneck_sims(neutral)")
 names = list.files(pattern=".rds")
 folds = split(names, as.factor(1:cores))
 genomes = lapply(folds, function(d){ lapply(d,readRDS)})
@@ -33,17 +33,17 @@ genomes = lapply(folds, function(d){ lapply(d,readRDS)})
 doParallel::registerDoParallel(cl,cores = cores)
 
 df = foreach(i = 1:length(genomes)) %dopar% {
- # .libPaths(c("/fast/users/a1708050/local/RLibs",.libPaths()))
+  # .libPaths(c("/fast/users/a1708050/local/RLibs",.libPaths()))
   #clusterEvalQ(cl, .libPaths("/fast/users/a1708050/local/RLibs"))
   .libPaths(libs)
   
   popgen.tools::generate_df(sim_list = genomes[[i]],nwins = 11,
-                  split_type="mut",snp=1000,form="wide",
-                  LD_downsample = T, ds_prop = 0.2)
+                            split_type="mut",snp=1000,form="wide",
+                            LD_downsample = T, ds_prop = 0.2)
 }
 b=Sys.time()
 
 final_df = do.call(rbind,df)
 
-readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/data/dataframes/snp_split/snp_hard_btl.csv")
+readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/data/dataframes/snp_split/snp_neutral_btl.csv")
 b-a

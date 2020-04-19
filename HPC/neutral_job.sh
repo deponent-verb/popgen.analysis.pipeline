@@ -12,5 +12,5 @@
 
 # Execute the program
 # (The example here is a sequential bash script; use a suitable program for your case.)
-R CMD BATCH hpc_ss.R
-cat hpc_ss.Rout
+R CMD BATCH neutral_ss.R
+cat neutral_ss.Rout

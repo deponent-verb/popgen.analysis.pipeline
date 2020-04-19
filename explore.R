@@ -1,6 +1,10 @@
 pacman::p_load(tidyverse)
 library(tidymodels)
 
+neutral = read_csv("~/work/MPhil/ml_review/data/snp_split/snp_neutral_btl.csv")
+hard = read_csv("~/work/MPhil/ml_review/data/snp_split/snp_hard_btl.csv")
+cpop=read_csv("~/work/MPhil/ml_review/data/snp_split/snp_cpop.csv")
+
 #exploratory data analysis
 
 df<-read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/bt_cpop.csv")
