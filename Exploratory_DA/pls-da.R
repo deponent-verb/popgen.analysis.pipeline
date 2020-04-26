@@ -18,7 +18,7 @@ X <- genome_SS %>%
 
 Y <- genome_SS$sweep
 
-res = splsda(X,Y)
+res = splsda(X,Y , scale=T)
 
 #Plot data on the top two components
 plotIndiv(res, ind.names = F , legend = T,
@@ -28,9 +28,18 @@ plotIndiv(res, ind.names = F , legend = T,
 
 #Display predictors that contribute >0.7 to the definition of each component.
 #Further away they are from center, the higher their loading. 
-plotVar(res, cutoff=0.7, font = 0.001, overlap=F)
+plotVar(res, cutoff=0.7, overlap=F, cex = 2)
 
-plotVar(res, cutoff=0.7, font = 0.001, overlap=F, plot = F)
+#plot the pls component loadings
+pls_load = selectVar(res, comp =1)$value 
+pls_load = setNames(cbind(rownames(pls_load), pls_load, row.names=NULL),
+         c("Stat","Value"))
+ggplot(data = pls_load, aes(x = Stat, y = Value)) +
+  geom_point()
+
+plotLoadings(res, comp = 1 )
+
+#plotVar(res, cutoff=0.7, font = 0.001, overlap=F, plot = F)
 
 
 #plot on classifier background
