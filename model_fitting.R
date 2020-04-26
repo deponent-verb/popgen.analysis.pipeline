@@ -2,10 +2,11 @@
 
 pacman::p_load(tidyverse)
 library(tidymodels)
+library(vip)
 
 #Read in data ----
 
-genomes = read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/bt_cpop.csv")
+genomes = read_csv("~/work/MPhil/ml_review/data/snp_split/split_snp_set.csv")
 
 #remove bottleneck and selection coefficient params. We shouldn't fit model on these variables. 
 
@@ -25,8 +26,10 @@ genome_test = testing (genome_split)
 
 genomes_recipe <- recipe(sweep ~., data=genome_train) %>%
   step_corr(all_predictors(),threshold = 0.8) %>%
-  step_center(starts_with("H"),starts_with("D")) %>%
-  step_scale(starts_with("H"),starts_with("D")) %>%
+  step_center(starts_with("H"), starts_with("D"), starts_with("L"), 
+              starts_with("w"), starts_with("Z")) %>%
+  step_scale(starts_with("H"), starts_with("D"), starts_with("L"), 
+             starts_with("w"), starts_with("Z")) %>%
   prep()
 
 # genomes_recipe2 <- recipe (sweep ~., data= genome_train) %>%

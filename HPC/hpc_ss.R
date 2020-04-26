@@ -38,12 +38,12 @@ df = foreach(i = 1:length(genomes)) %dopar% {
   .libPaths(libs)
   
   popgen.tools::generate_df(sim_list = genomes[[i]],nwins = 11,
-                  split_type="mut",snp=1000,form="wide",
+                  split_type="base",snp=1000,form="wide",
                   LD_downsample = T, ds_prop = 0.2)
 }
 b=Sys.time()
 
 final_df = do.call(rbind,df)
 
-readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/data/dataframes/snp_split/snp_hard_btl.csv")
+readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/data/dataframes/base_split/base_hard_btl.csv")
 b-a
