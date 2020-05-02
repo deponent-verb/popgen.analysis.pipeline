@@ -1,15 +1,11 @@
 pacman::p_load(tidyverse)
 library(tidymodels)
 
-#load data
-snp_set<-read_csv("~/work/MPhil/ml_review/data/snp_split/split_snp_set.csv")
-snp_set$sweep = as.factor(snp_set$sweep)
-snp_set$s_coef=as.factor(snp_set$s_coef)
-levels(snp_set$sweep) = c(1,0)
+# load in cleaned data from data cleaning script
 
 #Data cleaning. Take out bottleneck info and selection coefficient for now. ----
 genome_SS  <- snp_set %>% 
-  select(sweep, H_1:h123_11)
+  dplyr::select(sweep, H_1:h123_11)
 genome_SS
 
 skimr::skim(genome_SS)
@@ -25,6 +21,7 @@ pc_all <- recipe(data = genome_SS, sweep ~.) %>% #set our group to be sweep
 
 tidy_pca <- tidy(pc_all, 2) #take the loadings on each PC. Entered 2 because our recipe had 2 steps.
 
+#plot the PC loadings for the top 4 PC's. 
 tidy_pca %>%
   filter(component %in% c("PC1","PC2","PC3","PC4")) %>% #plot first 4 PC's
   mutate(component = fct_inorder(component)) %>% #make sure PC's are in order
@@ -33,6 +30,7 @@ tidy_pca %>%
   facet_wrap(~component) + 
   labs(y=NULL)
 
+#Plot the top 20 loadings by absolute value for each PC 
 tidy_pca %>%
   filter(component %in% c("PC1","PC2","PC3","PC4")) %>%
   group_by(component) %>%
@@ -77,7 +75,56 @@ plot(Value ~ Statistic, pc_load)
 ggplot(data = pc_load, aes(x = Statistic, y = Value) ) +
   geom_point()
 
-#Remarks. 
+#PC loadings in depth ----
+#Group the summary statistics and look at their respective loadings on the top PC's.
 
+#Group statistics on via SFS, LD, haplotype
+
+pca_load <- tidy_pca %>%
+  #grab the first 2/3 letters of the terms to classify them 
+  mutate(type = case_when(stringr::str_extract(terms, "^.{2}") %in% c("H_", "D_") ~ 'SFS',
+                          stringr::str_extract(terms, "^.{2}") %in% c("h1", "h2") ~ 'Haplotype',
+                          stringr::str_extract(terms, "^.{3}") %in% c("Zns", "LD_","w_m") ~ 'LD',
+                          TRUE ~ 'Other'
+  )) %>%
+  #group via window
+  mutate(window = stringr::str_sub(tidy_pca$terms, -2, -1)) %>%
+  #group via statistic
+  mutate(stat = case_when(stringr::str_extract(terms, "^.{2}") == "H_" ~ 'H',
+                          stringr::str_extract(terms, "^.{2}") == "D_" ~ 'D',
+                          stringr::str_extract(terms, "^.{4}") == "LD_a" ~ 'LD_avg',
+                          stringr::str_extract(terms, "^.{4}") == "LD_m" ~ 'LD_max',
+                          stringr::str_extract(terms, "^.{3}") == "Zns" ~ 'Zns',
+                          stringr::str_extract(terms, "^.{2}") == "w_" ~ 'w_max',
+                          stringr::str_extract(terms, "^.{3}") == "h1_" ~ 'h1',
+                          stringr::str_extract(terms, "^.{3}") == "h2_" ~ 'h2',
+                          stringr::str_extract(terms, "^.{4}") == "h12_" ~ 'h12',
+                          stringr::str_extract(terms, "^.{4}") == "h123" ~ 'h123'
+                          ))
+
+#boxplot of loadings grouped by type
+pca_load %>%
+  filter(component %in% c("PC1","PC2","PC3","PC4")) %>%
+  ggplot(aes(y = value, color = type)) + 
+  geom_boxplot() + 
+  facet_wrap(~component) + 
+  ggtitle("PCA on whole data")
+
+#boxplot of loadings grouped by statistic
+pca_load %>%
+  filter(component %in% c("PC1","PC2","PC3","PC4")) %>%
+  ggplot(aes(y = value, color = stat, x = stat)) + 
+  geom_boxplot() + 
+  facet_wrap(~component) + 
+  ggtitle("PCA on whole data")
+
+#boxplot of loadings grouped by window
+pca_load %>%
+  filter(component %in% c("PC1","PC2","PC3","PC4")) %>%
+  ggplot(aes(y = value, color = window)) + 
+  geom_boxplot() + 
+  facet_wrap(~component) + 
+  ggtitle("PCA on whole data")
+  
 #Ask Jono how to interpret this plot. Does a high magnitude value mean that the predictor does a good job separating the data?
 #Need Jono's expert coding skills to tidy this up. (e.g. fix the horizontal axis, add color code)

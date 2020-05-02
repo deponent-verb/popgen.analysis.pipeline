@@ -8,13 +8,13 @@ snp_set$s_coef=as.factor(snp_set$s_coef)
 
 #Data cleaning. Take out bottleneck info and selection coefficient for now. ----
 genome_SS  <- snp_set %>% 
-  select(sweep, H_1:h123_11)
+  dplyr::select(sweep, H_1:h123_11)
 genome_SS
 
 
 # To do PLS, we must separate our data into predictors and response variables
 X <- genome_SS %>%
-  select(-sweep)
+  dplyr::select(-sweep)
 
 Y <- genome_SS$sweep
 
@@ -28,7 +28,7 @@ plotIndiv(res, ind.names = F , legend = T,
 
 #Display predictors that contribute >0.7 to the definition of each component.
 #Further away they are from center, the higher their loading. 
-plotVar(res, cutoff=0.7, overlap=F, cex = 2)
+plotVar(res, cutoff=0, overlap=F, cex = 2)
 
 #plot the pls component loadings
 pls_load = selectVar(res, comp =1)$value 
