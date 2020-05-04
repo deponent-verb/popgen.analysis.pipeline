@@ -1,13 +1,11 @@
 pacman::p_load(mixOmics, tidyverse)
 
-#load data
-snp_set<-read_csv("~/work/MPhil/ml_review/data/snp_split/split_snp_set.csv")
-snp_set$sweep = as.factor(snp_set$sweep)
-snp_set$s_coef=as.factor(snp_set$s_coef)
+#load data using data cleaning script
 
 
 #Data cleaning. Take out bottleneck info and selection coefficient for now. ----
 genome_SS  <- snp_set %>% 
+  filter(demography == 'cpop') %>%
   dplyr::select(sweep, H_1:h123_11)
 genome_SS
 

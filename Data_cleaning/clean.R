@@ -21,3 +21,4 @@ null_index <- snp_set$demography == "t1:0_s1:1_t2:0_s2:1"
 snp_set$demography[null_index] <- 'cpop'
 snp_set$demography <- as.factor(snp_set$demography)
 
+write_csv(snp_set,"./data/bt_cpop.csv")

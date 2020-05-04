@@ -5,6 +5,7 @@ library(tidymodels)
 
 #Data cleaning. Take out bottleneck info and selection coefficient for now. ----
 genome_SS  <- snp_set %>% 
+  filter (demography == 'cpop') %>%
   dplyr::select(sweep, H_1:h123_11)
 genome_SS
 
@@ -108,7 +109,7 @@ pca_load %>%
   ggplot(aes(y = value, color = type)) + 
   geom_boxplot() + 
   facet_wrap(~component) + 
-  ggtitle("PCA on whole data")
+  ggtitle("PCA on cpop data")
 
 #boxplot of loadings grouped by statistic
 pca_load %>%
@@ -116,7 +117,7 @@ pca_load %>%
   ggplot(aes(y = value, color = stat, x = stat)) + 
   geom_boxplot() + 
   facet_wrap(~component) + 
-  ggtitle("PCA on whole data")
+  ggtitle("PCA on cpop data")
 
 #boxplot of loadings grouped by window
 pca_load %>%
@@ -124,7 +125,7 @@ pca_load %>%
   ggplot(aes(y = value, color = window)) + 
   geom_boxplot() + 
   facet_wrap(~component) + 
-  ggtitle("PCA on whole data")
+  ggtitle("PCA on cpop data")
   
 #Ask Jono how to interpret this plot. Does a high magnitude value mean that the predictor does a good job separating the data?
 #Need Jono's expert coding skills to tidy this up. (e.g. fix the horizontal axis, add color code)
