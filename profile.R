@@ -27,3 +27,22 @@ profvis({
   output<-sum_stats(sim=temp,split_type="base",nwins = nwins, ID=id, snp=1000,
                     LD_downsample = T, ds_prop = 0.1, ds_seed = 5)
 })
+
+profvis({
+  temp = foreach::foreach (i = 1:length(tune_blocks), .packages = c('tune','yardstick')) %dopar% {
+    
+    tune::tune_grid(meta_workflow,
+                    resamples = cv_splits,
+                    grid = tune_blocks[[i]], 
+                    metrics=metric_set(accuracy),
+                    control=control_grid(save_pred = TRUE)) 
+  }
+})
+
+profvis({
+  tuning = tune_grid(meta_workflow,
+                     resamples = cv_splits,
+                     grid = tuning_params, 
+                     metrics=metric_set(accuracy),
+                     control=control_grid(save_pred = TRUE))
+})

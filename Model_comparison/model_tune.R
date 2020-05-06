@@ -11,7 +11,9 @@
 #' @param cv_folds: Number of folds to break training data for tuning.
 #' @param seed: optional random seed for cross validation
 #'
-#' @return List containing the best model and tuning results.
+#' @return List containing the model type (e.g. randomForest), the best set of tuning params,
+#' a tibble of tuning results, computational time taken for tuning, a final model fitted on the
+#' whole training data using the best set of tuning params. 
 #' @export
 #'
 #' @examples
@@ -31,20 +33,18 @@ model_tune <- function (recipe, train_data , model , tuning_params, cv_folds, se
     add_recipe(recipe) %>%
     add_model(model)
   
-  #start= Sys.time()
-  #set up parallel computing for tuning
-  cores = parallel::detectCores()
-  cl = parallel::makeCluster(cores)
+  #unparallel version. prelim profiling shows parallelisation gives no speed bonus. Makes collecting metrics later more fiddly as well.
   
-  #hyperparam tuning via grid search
+  t1 = Sys.time()
   tuning = tune_grid(meta_workflow,
                      resamples = cv_splits,
-                     grid = tuning_params, 
+                     grid = tuning_params,
                      metrics=metric_set(accuracy),
                      control=control_grid(save_pred = TRUE))
-  
-  #create a tibble for the cv accuracy of each set of tuning params
+  t2 = Sys.time()
+
   tune_results = collect_metrics(tuning)
+
   
   #find the best tuning parameters based on cv accuracy
   best_params <- tuning %>%
@@ -60,7 +60,34 @@ model_tune <- function (recipe, train_data , model , tuning_params, cv_folds, se
     pull_workflow_fit()
   
   #gather outputs
-  output <- list(best_model, tune_results)
+  output <- list(model = class(model)[1], 
+                 best_params = best_params,
+                 tune_tibble = tune_results, 
+                 comp_time = t2-t1,
+                 fitted_model = best_model)
   return(output)
 }
+
+# #set up parallel computing for tuning
+# cores = parallel::detectCores()
+# cl = parallel::makeCluster(cores)
+# `%dopar%` <- foreach::`%dopar%`
+# 
+# #hyperparam tuning via grid search
+# doParallel::registerDoParallel(cl,cores = cores)
+# tune_blocks = split(tuning_params, as.factor(1:cores))
+# 
+# tuning_list = foreach::foreach (i = 1:length(tune_blocks), .packages = c('tune','yardstick')) %dopar% {
+#   
+#   tune::tune_grid(meta_workflow,
+#             resamples = cv_splits,
+#             grid = tune_blocks[[i]], 
+#             metrics=metric_set(accuracy),
+#             control=control_grid(save_pred = TRUE)) 
+# }
+# 
+# #create a tibble for the cv accuracy of each set of tuning params
+# tuning = lapply(tuning_list,collect_metrics) 
+# tune_results = do.call(rbind, tuning)
+# 
 

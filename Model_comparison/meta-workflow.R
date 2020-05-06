@@ -32,6 +32,8 @@ std_recipe <- recipe(sweep ~., data=genome_train) %>% #set sweep as response var
   step_normalize(all_predictors()) %>% #normalize all predictors
   prep()
 
+baked_train <- bake(std_recipe, genome_train)
+
 #Designate model ----
 
 #Logistical regression with L2 regularisation
@@ -56,6 +58,7 @@ lr_results = model_tune(recipe = std_recipe,
                         tuning_params = lr_grid, 
                         seed = 1)
 
+lr_imp = model_vip(model = genome_lr, features = colnames(baked_train))
 
 
 
