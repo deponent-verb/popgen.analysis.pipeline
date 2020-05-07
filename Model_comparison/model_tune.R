@@ -12,8 +12,8 @@
 #' @param seed: optional random seed for cross validation
 #'
 #' @return List containing the model type (e.g. randomForest), the best set of tuning params,
-#' a tibble of tuning results, computational time taken for tuning, a final model fitted on the
-#' whole training data using the best set of tuning params. 
+#' a tibble of tuning results, computational time taken for tuning, a final worfklow with the 
+#' model fitted on the whole training data using the best set of tuning params. 
 #' @export
 #'
 #' @examples
@@ -55,16 +55,13 @@ model_tune <- function (recipe, train_data , model , tuning_params, cv_folds, se
   final_workflow <- finalize_workflow(meta_workflow, best_params) %>%
     fit(data = train_data)
   
-  #extract the final fitted model
-  best_model <- final_workflow %>%
-    pull_workflow_fit()
-  
   #gather outputs
-  output <- list(model = class(model)[1], 
+  source("./Model_comparison/tuned_model.R")
+  output <- tuned_model(model = class(model)[1], 
                  best_params = best_params,
                  tune_tibble = tune_results, 
                  comp_time = t2-t1,
-                 fitted_model = best_model)
+                 fitted_model = final_workflow)
   return(output)
 }
 

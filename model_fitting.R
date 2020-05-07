@@ -47,7 +47,6 @@ genomes_recipe
 
 #Pick tuning params based on 10-fold CV
 
-set.seed(1688)
 cv_splits<-vfold_cv(genome_train,v=10,strata="sweep")
 
 #Logistical Regression with L2 regularisation ----
