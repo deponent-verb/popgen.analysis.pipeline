@@ -42,9 +42,9 @@ std_recipe <- recipe(sweep ~., data=genome_train) %>% #set sweep as response var
 
 baked_train <- bake(std_recipe, genome_train)
 
-#Designate model ----
+#Designate model and hyperparameters ----
 
-#Logistical regression with L2 regularisation
+#Logistical regression with L2 regularisation ----
 genome_lr = logistic_reg(
   mode="classification",
   penalty = tune(),
@@ -52,13 +52,36 @@ genome_lr = logistic_reg(
 ) %>%
   set_engine("glmnet")
 
-#Hyperparameter tuning----
-
 #Create set of tuning parameters
 lr_grid = grid_regular(penalty(range=c(0,0.2)),
                        levels=10, 
                        original = F)
 
+#RandomForest classifier
+
+genome_rf<-rand_forest(
+  mode="classification",
+  mtry=tune(),
+  trees=500, #caret does built in 500 trees. ntrees doesn't matter.
+  min_n=tune()
+) %>%
+  set_engine("ranger")
+
+rf_grid<-grid_regular(mtry(range=c(1,30)),min_n(range=c(1,200)),levels=5)
+
+rf_results = model_tune(recipe = std_recipe, 
+                        train_data = genome_train, 
+                        cv_folds = 10, 
+                        model = genome_rf , 
+                        tuning_params = rf_grid, 
+                        seed = 1)
+
+rf_imp = model_vip(model = rf_results, baked_data = baked_train)
+
+
+#Running workflow functions on each model
+
+#logistic regression example
 lr_results = model_tune(recipe = std_recipe, 
                         train_data = genome_train, 
                         cv_folds = 10, 
@@ -70,7 +93,10 @@ lr_auc = model_performance(fitted_model = lr_results$fitted_model,
                            test_data = genome_test,
                            recipe = std_recipe)
 
-#lr_imp = model_vip(model = genome_lr, features = colnames(baked_train))
+lr_imp = model_vip(model = lr_results, baked_data = baked_train)
+
+#imp_temp [order(imp_temp$Importance, decreasing = T),]
+#population[order(population$age),]
 
 
 

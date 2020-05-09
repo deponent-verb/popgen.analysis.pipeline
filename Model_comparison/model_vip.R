@@ -19,6 +19,9 @@ model_vip <- function(model, baked_data){
   #refit model in caret because vip functions are not compatible with parsnip models.
   model_type = model$model
   fitControl <- caret::trainControl(method = "none", classProbs = TRUE)
+  baked_data <- baked_data %>%
+    select(-demography)
+  hyperparams <- model$best_params
   
   if(model_type=="logistic_reg"){
     caret_model = caret::train(
@@ -26,10 +29,21 @@ model_vip <- function(model, baked_data){
       data = baked_data,
       method = 'glmnet',
       trControl = fitControl,
-      tuneGrid = data.frame(alpha = 1 ,lambda = model$best_params[[1]]),
+      tuneGrid = data.frame(alpha = 1 ,lambda = hyperparams$penalty),
       metric = "accuracy"
     )
-  } else {
+  } else if (model_type == "rand_forest"){
+    caret_model = caret::train(
+      sweep~. , 
+      data = baked_data, 
+      method = 'ranger',
+      trControl = fitControl,
+      tuneGrid = data.frame(splitrule = 'gini', 
+                            mtry = hyperparams$mtry, 
+                            min.node.size = hyperparams$min_n),
+      metric = "accuracy"
+    )
+  } else  {
     stop("model type not supported.")
   }
   

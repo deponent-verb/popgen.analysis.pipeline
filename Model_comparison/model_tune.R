@@ -60,7 +60,7 @@ model_tune <- function (recipe, train_data , model , tuning_params, cv_folds, se
   output <- tuned_model(model = class(model)[1], 
                  best_params = best_params,
                  tune_tibble = tune_results, 
-                 comp_time = t2-t1,
+                 comp_time = (t2-t1)/nrow(tuning_params),
                  fitted_model = final_workflow)
   return(output)
 }
