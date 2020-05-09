@@ -12,5 +12,5 @@
 
 # Execute the program
 # (The example here is a sequential bash script; use a suitable program for your case.)
-R CMD BATCH meta-workflow.R
-cat meta-workflow.Rout
+R CMD BATCH ./Model_comparison/meta-workflow.R
+cat ./Model_comparison/meta-workflow.Rout
