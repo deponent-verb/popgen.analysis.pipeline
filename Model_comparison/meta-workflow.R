@@ -2,7 +2,8 @@
 
 #Load libraries. pacman doesn't like tidymodels
 
-pacman::p_load(tidyverse,vip)
+library(tidyverse)
+library(vip)
 library(tidymodels)
 source("./Model_comparison/model_tune.R")
 source("./Model_comparison/model_vip.R")
