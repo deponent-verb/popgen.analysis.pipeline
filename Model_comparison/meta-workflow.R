@@ -69,14 +69,14 @@ genome_rf<-rand_forest(
 
 rf_grid<-grid_regular(mtry(range=c(1,30)),min_n(range=c(1,200)),levels=2)
 
-rf_results = model_tune(recipe = std_recipe, 
-                        train_data = genome_train, 
-                        cv_folds = 10, 
-                        model = genome_rf , 
-                        tuning_params = rf_grid, 
-                        seed = 1)
-
-rf_imp = model_vip(model = rf_results, baked_data = baked_train)
+# rf_results = model_tune(recipe = std_recipe, 
+#                         train_data = genome_train, 
+#                         cv_folds = 10, 
+#                         model = genome_rf , 
+#                         tuning_params = rf_grid, 
+#                         seed = 1)
+# 
+# rf_imp = model_vip(model = rf_results, baked_data = baked_train)
 
 #SVM ----
 
@@ -88,66 +88,61 @@ genome_svm<-svm_poly(
 ) %>%
   set_engine("kernlab")
 
-svm_grid<-grid_regular(cost(range=c(5,7)),
-                       levels=3,
+svm_grid<-grid_regular(cost(range=c(5,10)),
+                       levels=6,
                        original = T)
 
 
-svm_results = model_tune(recipe = std_recipe, 
-                        train_data = genome_train, 
-                        cv_folds = 10, 
-                        model = genome_svm , 
-                        tuning_params = svm_grid, 
-                        seed = 1)
+# svm_results = model_tune(recipe = std_recipe, 
+#                         train_data = genome_train, 
+#                         cv_folds = 10, 
+#                         model = genome_svm , 
+#                         tuning_params = svm_grid, 
+#                         seed = 1)
 
 #MARS
-
+# genome_mars <- mars(
+#   mode = "classification",
+#   prod_degree = 1, 
+#   prune_method = default #find default
+# )
 
 
 
 #Running workflow functions on each model
 
 #logistic regression example
-lr_results = model_tune(recipe = std_recipe, 
-                        train_data = genome_train, 
-                        cv_folds = 10, 
-                        model = genome_lr , 
-                        tuning_params = lr_grid, 
-                        seed = 1)
+# lr_results = model_tune(recipe = std_recipe, 
+#                         train_data = genome_train, 
+#                         cv_folds = 10, 
+#                         model = genome_lr , 
+#                         tuning_params = lr_grid, 
+#                         seed = 1)
+# 
+# lr_auc = model_performance(fitted_model = lr_results$fitted_model, 
+#                            test_data = genome_test,
+#                            recipe = std_recipe)
 
-lr_auc = model_performance(fitted_model = lr_results$fitted_model, 
-                           test_data = genome_test,
-                           recipe = std_recipe)
-
-lr_imp = model_vip(model = lr_results, baked_data = baked_train)
+# lr_imp = model_vip(model = lr_results, baked_data = baked_train)
 
 #workflow to assess all models
 
 model_list <- list(genome_lr, genome_rf, genome_svm)
 hyperparam_list <- list(lr_grid, rf_grid, svm_grid)
 
-temp <- map2(.x = model_list,
+tuned_models <- map2(.x = model_list,
              .y = hyperparam_list, 
              .f = model_tune,
              recipe = std_recipe,
              train_data = genome_train,
-             cv_fold = 5)
+             cv_fold = 10)
 
-temp1 <- map2()
+saveRDS(tuned_models, file = "./models_tuned.rds")
+
 #model_performance <- function (fitted_model, test_data, recipe)
 
 ##ignore below
-purrr::pmap(arg_list,model_tune)
 
-model_tune <- function (recipe, train_data , model , 
-                        tuning_params, cv_folds, seed = NA)
-
-lr_results = model_tune(recipe = std_recipe, 
-                        train_data = genome_train, 
-                        cv_folds = 10, 
-                        model = genome_lr , 
-                        tuning_params = lr_grid, 
-                        seed = 1)
 
 
 
