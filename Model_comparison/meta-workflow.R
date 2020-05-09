@@ -137,7 +137,7 @@ tuned_models <- map2(.x = model_list,
              train_data = genome_train,
              cv_fold = 10)
 
-saveRDS(tuned_models, file = "./models_tuned.rds")
+saveRDS(tuned_models, file = "./results/models_tuned.rds")
 
 #model_performance <- function (fitted_model, test_data, recipe)
 
