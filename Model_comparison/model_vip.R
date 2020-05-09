@@ -43,7 +43,16 @@ model_vip <- function(model, baked_data){
                             min.node.size = hyperparams$min_n),
       metric = "accuracy"
     )
-  } else  {
+  } else if (model_type=="svm_poly"){
+    caret_model = caret::train (
+      sweep~., 
+      data = baked_data,
+      method = 'svmLinear',
+      trControl = fitControl, 
+      tuneGrid = data.frame(Cost = hyperparams$cost),
+      metric = "accuracy")
+
+  }else  {
     stop("model type not supported.")
   }
   
@@ -68,13 +77,9 @@ model_vip <- function(model, baked_data){
       theme_light()
   })
   
-  #importance plot
-  #imp_plot <- vip::vip(model, method = "firm", ice =T, train = baked_train)
-  
   #importance measure
   imp <- vip::vi_firm(caret_model, feature_names = features)
 
-  
   output <- list(pdps, ice_curves, imp)
   return(output)
 }

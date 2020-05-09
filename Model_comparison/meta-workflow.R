@@ -62,12 +62,12 @@ lr_grid = grid_regular(penalty(range=c(0,0.2)),
 genome_rf<-rand_forest(
   mode="classification",
   mtry=tune(),
-  trees=500, #caret does built in 500 trees. ntrees doesn't matter.
+  trees=100, #caret does built in 500 trees. ntrees doesn't matter.
   min_n=tune()
 ) %>%
   set_engine("ranger")
 
-rf_grid<-grid_regular(mtry(range=c(1,30)),min_n(range=c(1,200)),levels=5)
+rf_grid<-grid_regular(mtry(range=c(1,30)),min_n(range=c(1,200)),levels=2)
 
 rf_results = model_tune(recipe = std_recipe, 
                         train_data = genome_train, 
@@ -77,6 +77,32 @@ rf_results = model_tune(recipe = std_recipe,
                         seed = 1)
 
 rf_imp = model_vip(model = rf_results, baked_data = baked_train)
+
+#SVM ----
+
+#svm with linear kernel
+genome_svm<-svm_poly(
+  mode="classification",
+  cost=tune(),
+  degree=1
+) %>%
+  set_engine("kernlab")
+
+svm_grid<-grid_regular(cost(range=c(5,7)),
+                       levels=3,
+                       original = T)
+
+
+svm_results = model_tune(recipe = std_recipe, 
+                        train_data = genome_train, 
+                        cv_folds = 10, 
+                        model = genome_svm , 
+                        tuning_params = svm_grid, 
+                        seed = 1)
+
+#MARS
+
+
 
 
 #Running workflow functions on each model
@@ -95,9 +121,33 @@ lr_auc = model_performance(fitted_model = lr_results$fitted_model,
 
 lr_imp = model_vip(model = lr_results, baked_data = baked_train)
 
-#imp_temp [order(imp_temp$Importance, decreasing = T),]
-#population[order(population$age),]
+#workflow to assess all models
 
+model_list <- list(genome_lr, genome_rf, genome_svm)
+hyperparam_list <- list(lr_grid, rf_grid, svm_grid)
+
+temp <- map2(.x = model_list,
+             .y = hyperparam_list, 
+             .f = model_tune,
+             recipe = std_recipe,
+             train_data = genome_train,
+             cv_fold = 5)
+
+temp1 <- map2()
+#model_performance <- function (fitted_model, test_data, recipe)
+
+##ignore below
+purrr::pmap(arg_list,model_tune)
+
+model_tune <- function (recipe, train_data , model , 
+                        tuning_params, cv_folds, seed = NA)
+
+lr_results = model_tune(recipe = std_recipe, 
+                        train_data = genome_train, 
+                        cv_folds = 10, 
+                        model = genome_lr , 
+                        tuning_params = lr_grid, 
+                        seed = 1)
 
 
 
