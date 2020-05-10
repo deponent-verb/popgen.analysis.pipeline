@@ -4,7 +4,9 @@
 library(tidyverse)
 library(vip)
 library(tidymodels)
-library(parallel)
+library("foreach")
+library("parallel")
+library("doSNOW")
 source("./Model_comparison/model_tune.R")
 source("./Model_comparison/model_vip.R")
 source("./Model_comparison/model_performance.R")
@@ -96,12 +98,32 @@ svm_grid<-grid_regular(cost(range=c(5,10)),
 model_list <- list(genome_lr, genome_rf, genome_svm)
 hyperparam_list <- list(lr_grid, rf_grid, svm_grid)
 
-.libPaths(libs)
-tuned_models <- map2(.x = model_list,
-                     .y = hyperparam_list, 
-                     .f = model_tune,
-                     recipe = std_recipe,
-                     train_data = genome_train,
-                     cv_fold = 5)
+
+
+tuned_models = foreach(i = 1:length(model_list)) %dopar% {
+  .libPaths(libs)
+  model_tune(recipe = std_recipe,
+             train_data = genome_train,
+             model = model_list[[i]],
+             tuning_params = hyperparam_list[[i]],
+             cv_folds = 5,
+             seed = 1)
+}
+
+# df = foreach(i = 1:length(genomes)) %dopar% {
+#   # .libPaths(c("/fast/users/a1708050/local/RLibs",.libPaths()))
+#   #clusterEvalQ(cl, .libPaths("/fast/users/a1708050/local/RLibs"))
+#   .libPaths(libs)
+#   
+#   popgen.tools::generate_df(sim_list = genomes[[i]],nwins = 11,
+#                             split_type="base",snp=1000,form="wide",
+#                             LD_downsample = T, ds_prop = 0.2)
+# }
+# tuned_models <- map2(.x = model_list,
+#                      .y = hyperparam_list, 
+#                      .f = model_tune,
+#                      recipe = std_recipe,
+#                      train_data = genome_train,
+#                      cv_fold = 5)
 
 saveRDS(tuned_models, file = "./results/models_tuned.rds")

@@ -131,6 +131,7 @@ svm_grid<-grid_regular(cost(range=c(5,10)),
 model_list <- list(genome_lr, genome_rf, genome_svm)
 hyperparam_list <- list(lr_grid, rf_grid, svm_grid)
 
+doParallel::registerDoParallel()
 tuned_models <- map2(.x = model_list,
              .y = hyperparam_list, 
              .f = model_tune,
