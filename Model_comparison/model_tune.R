@@ -29,6 +29,8 @@ model_tune <- function (recipe, train_data , model , tuning_params, cv_folds, se
   cv_splits<-rsample::vfold_cv(train_data,v=10,strata="sweep")
   
   # model workflow
+  `%>%` <- magrittr::`%>%`
+  
   meta_workflow <- workflows::workflow() %>%
     workflows::add_recipe(recipe) %>%
     workflows::add_model(model)
