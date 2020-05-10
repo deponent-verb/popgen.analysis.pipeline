@@ -41,8 +41,8 @@ model_tune <- function (recipe, train_data , model , tuning_params, cv_folds, se
   tuning = tune::tune_grid(meta_workflow,
                      resamples = cv_splits,
                      grid = tuning_params,
-                     metrics=metric_set(accuracy),
-                     control=control_grid(save_pred = TRUE))
+                     metrics= yardstick::metric_set(accuracy),
+                     control=tune::control_grid(save_pred = TRUE))
   t2 = Sys.time()
 
   tune_results = tune::collect_metrics(tuning)
