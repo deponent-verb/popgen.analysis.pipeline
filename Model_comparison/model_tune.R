@@ -26,34 +26,34 @@ model_tune <- function (recipe, train_data , model , tuning_params, cv_folds, se
   
   #Break training data into folds
   set.seed(seed)
-  cv_splits<-vfold_cv(train_data,v=10,strata="sweep")
+  cv_splits<-rsample::vfold_cv(train_data,v=10,strata="sweep")
   
   # model workflow
-  meta_workflow <- workflow() %>%
-    add_recipe(recipe) %>%
-    add_model(model)
+  meta_workflow <- workflows::workflow() %>%
+    workflows::add_recipe(recipe) %>%
+    workflows::add_model(model)
   
   #unparallel version. prelim profiling shows parallelisation gives no speed bonus. Makes collecting metrics later more fiddly as well.
   
   t1 = Sys.time()
-  tuning = tune_grid(meta_workflow,
+  tuning = tune::tune_grid(meta_workflow,
                      resamples = cv_splits,
                      grid = tuning_params,
                      metrics=metric_set(accuracy),
                      control=control_grid(save_pred = TRUE))
   t2 = Sys.time()
 
-  tune_results = collect_metrics(tuning)
+  tune_results = tune::collect_metrics(tuning)
 
   
   #find the best tuning parameters based on cv accuracy
   best_params <- tuning %>%
-    select_best(metric = "accuracy")
+    tune::select_best(metric = "accuracy")
   
   #finalize the workflow. Take model with the best set of tuning params and fit onto the whole training data. 
   
-  final_workflow <- finalize_workflow(meta_workflow, best_params) %>%
-    fit(data = train_data)
+  final_workflow <- tune::finalize_workflow(meta_workflow, best_params) %>%
+    parsnip::fit(data = train_data)
   
   #gather outputs
   source("./Model_comparison/tuned_model.R")
