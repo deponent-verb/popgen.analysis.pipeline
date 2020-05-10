@@ -90,7 +90,7 @@ genome_svm<-svm_poly(
   set_engine("kernlab")
 
 svm_grid<-grid_regular(cost(range=c(5,10)),
-                       levels=6,
+                       levels=2,
                        original = T)
 
 

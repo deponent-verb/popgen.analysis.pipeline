@@ -10,6 +10,15 @@ source("./Model_comparison/model_performance.R")
 
 libs = .libPaths(c("/fast/users/a1708050/local/RLibs",.libPaths()))
 
+slurm_ntasks <- as.numeric(Sys.getenv("SLURM_NTASKS")) # Obtain environment variable SLURM_NTASKS
+if (is.numeric(slurm_ntasks)) {
+  cores = slurm_ntasks # if slurm_ntasks is numerical, then assign it to cores
+} else {
+  cores = detectCores() # Figure out how many cores there are
+}
+cl<-makeCluster(cores)
+doParallel::registerDoParallel(cl,cores = cores)
+
 #load data from cleaning script
 
 genomes = read_csv("./data/bt_cpop.csv")
@@ -77,7 +86,7 @@ genome_svm<-svm_poly(
   set_engine("kernlab")
 
 svm_grid<-grid_regular(cost(range=c(5,10)),
-                       levels=6,
+                       levels=2,
                        original = T)
 
 
@@ -91,6 +100,6 @@ tuned_models <- map2(.x = model_list,
                      .f = model_tune,
                      recipe = std_recipe,
                      train_data = genome_train,
-                     cv_fold = 10)
+                     cv_fold = 5)
 
 saveRDS(tuned_models, file = "./results/models_tuned.rds")
