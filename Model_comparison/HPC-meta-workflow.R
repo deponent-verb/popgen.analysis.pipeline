@@ -4,6 +4,7 @@
 library(tidyverse)
 library(vip)
 library(tidymodels)
+library(parallel)
 source("./Model_comparison/model_tune.R")
 source("./Model_comparison/model_vip.R")
 source("./Model_comparison/model_performance.R")
