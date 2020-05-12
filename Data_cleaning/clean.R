@@ -14,7 +14,8 @@ snp_set <- subset(snp_set, select = -c(ID))
 
 snp_set <- snp_set %>%
   mutate(demography = paste0("t1:",bottle_time1,"_s:",bottle_size1,"_t2:",
-                             bottle_time2)) 
+                             bottle_time2)) %>%
+  mutate(severity = (bottle_time1-bottle_time2)*bottle_size1)
 
 #convert the null bottleneck into cpop for clarity and ease of reading
 null_index <- snp_set$demography == "t1:0_s1:1_t2:0_s2:1"

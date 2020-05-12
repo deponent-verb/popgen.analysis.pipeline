@@ -50,9 +50,19 @@ model_vip <- function(model, baked_data){
       method = 'svmLinear',
       trControl = fitControl, 
       tuneGrid = data.frame(Cost = hyperparams$cost),
-      metric = "accuracy")
-
-  }else  {
+      metric = "accuracy"
+      )
+  } else if (model_type=="mars"){
+    caret_model = caret::train(
+      sweep~.,
+      data = baked_data,
+      method = 'earth',
+      trControl = fitControl,
+      tuneGrid = data.frame(nprune = hyperparams$num_terms,
+                            degree = hyperparams$prod_degree),
+      metric = "accuracy"
+    )
+  } else  {
     stop("model type not supported.")
   }
   
@@ -71,15 +81,15 @@ model_vip <- function(model, baked_data){
   
   #ice curves
   
-  ice_curves <- lapply(features, FUN = function(feature) {
-    ice <- pdp::partial(caret_model, pred.var = feature, ice = TRUE)
-    autoplot(ice, alpha = 0.1) + 
-      theme_light()
-  })
+  # ice_curves <- lapply(features, FUN = function(feature) {
+  #   ice <- pdp::partial(caret_model, pred.var = feature, ice = TRUE)
+  #   autoplot(ice, alpha = 0.1) + 
+  #     theme_light()
+  # })
   
   #importance measure
   imp <- vip::vi_firm(caret_model, feature_names = features)
-
-  output <- list(pdps, ice_curves, imp)
+  output <- list(pdps, imp)
+ # output <- list(pdps, ice_curves, imp)
   return(output)
 }

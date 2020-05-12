@@ -13,16 +13,19 @@
 #' @examples
 model_performance <- function (fitted_model, test_data, recipe){
   
-  demographies <- levels(test_data$demography)
+  demographies <- unique(test_data$severity) %>% 
+    sort()
   dem_auc=list()
   
+  i = 1
   for (fac in demographies){
     dem_data <- test_data %>%
-      dplyr::filter(demography == fac)
+      dplyr::filter(severity == fac)
     preds <- predict(fitted_model, dem_data, type = 'prob')
     truth <- dem_data$sweep %>% as.factor()
-    dem_auc[[fac]] <-roc_auc(tibble(preds,truth), truth = truth, .pred_hard) %>%
-      mutate(demography = fac)
+    dem_auc[[i]] <-roc_auc(tibble(preds,truth), truth = truth, .pred_hard) %>%
+      mutate(severity = fac)
+    i = i+1
   }
   output_auc = do.call(rbind,dem_auc)
   return(output_auc)

@@ -38,6 +38,7 @@ model_tune <- function (recipe, train_data , model , tuning_params, cv_folds, se
   #unparallel version. prelim profiling shows parallelisation gives no speed bonus. Makes collecting metrics later more fiddly as well.
   
   t1 = Sys.time()
+
   tuning = tune::tune_grid(meta_workflow,
                      resamples = cv_splits,
                      grid = tuning_params,

@@ -16,9 +16,11 @@ genomes = read_csv("./data/bt_cpop.csv")
 #truncate dataset to contain response and predictors only. Used for model fitting.
 
 genomes_SS = genomes %>% 
-  dplyr::select(sweep,H_1:h123_11,demography)
+  dplyr::select(sweep,H_1:h123_11,demography,severity)
 skimr::skim(genomes_SS)
 genomes_SS$demography <- as.factor(genomes_SS$demography)
+#genomes_SS$severity <- as.factor(genomes_SS$severity)
+
 
 #Partition dataset into training and testing sets.
 set.seed(1066)
@@ -37,6 +39,7 @@ genome_test = testing (genome_split)
 
 std_recipe <- recipe(sweep ~., data=genome_train) %>% #set sweep as response variable. everything else is a predictor.
   update_role(demography, new_role = 'demography') %>% #remove demography as a predictor
+  update_role(severity, new_role = 'demography') %>% #remove demography as a predictor
   step_corr(all_predictors(),threshold = 0.8) %>% #remove all highly correlated predictors
   step_normalize(all_predictors()) %>% #normalize all predictors
   prep()
@@ -49,14 +52,25 @@ baked_train <- bake(std_recipe, genome_train)
 genome_lr = logistic_reg(
   mode="classification",
   penalty = tune(),
-  mixture=1
+  mixture= tune()
 ) %>%
   set_engine("glmnet")
 
 #Create set of tuning parameters
-lr_grid = grid_regular(penalty(range=c(0,0.2)),
-                       levels=10, 
+lr_grid = grid_regular(penalty(range=c(0,0.1)),
+                               mixture(range=c(0,1)),
+                       levels=11, 
                        original = F)
+
+lr_results = model_tune(recipe = std_recipe,
+                        train_data = genome_train,
+                        cv_folds = 10,
+                        model = genome_lr ,
+                        tuning_params = lr_grid,
+                        seed = 1)
+
+lr_imp = model_vip(model = lr_results, baked_data = baked_train)
+saveRDS(lr_imp, file = './results/lr_imp.rds')
 
 #RandomForest classifier
 
@@ -68,83 +82,133 @@ genome_rf<-rand_forest(
 ) %>%
   set_engine("ranger")
 
-rf_grid<-grid_regular(mtry(range=c(1,30)),min_n(range=c(1,200)),levels=2)
+rf_grid<-grid_regular(mtry(range=c(10,100)),min_n(range=c(100,1000)),levels=10)
 
-# rf_results = model_tune(recipe = std_recipe, 
-#                         train_data = genome_train, 
-#                         cv_folds = 10, 
-#                         model = genome_rf , 
-#                         tuning_params = rf_grid, 
-#                         seed = 1)
-# 
-# rf_imp = model_vip(model = rf_results, baked_data = baked_train)
+rf_results = model_tune(recipe = std_recipe,
+                        train_data = genome_train,
+                        cv_folds = 10,
+                        model = genome_rf ,
+                        tuning_params = rf_grid,
+                        seed = 1)
+
+rf_imp = model_vip(model = rf_results, baked_data = baked_train)
+saveRDS(rf_imp, file = './results/rf_imp.rds')
 
 #SVM ----
 
 #svm with linear kernel
-genome_svm<-svm_poly(
-  mode="classification",
-  cost=tune(),
-  degree=1
-) %>%
-  set_engine("kernlab")
-
-svm_grid<-grid_regular(cost(range=c(5,10)),
-                       levels=2,
-                       original = T)
-
-
-# svm_results = model_tune(recipe = std_recipe, 
-#                         train_data = genome_train, 
-#                         cv_folds = 10, 
-#                         model = genome_svm , 
-#                         tuning_params = svm_grid, 
-#                         seed = 1)
-
-#MARS
-# genome_mars <- mars(
-#   mode = "classification",
-#   prod_degree = 1, 
-#   prune_method = default #find default
-# )
-
-
-
-#Running workflow functions on each model
-
-#logistic regression example
-# lr_results = model_tune(recipe = std_recipe, 
-#                         train_data = genome_train, 
-#                         cv_folds = 10, 
-#                         model = genome_lr , 
-#                         tuning_params = lr_grid, 
-#                         seed = 1)
+# genome_svm<-svm_poly(
+#   mode="classification",
+#   cost=tune(),
+#   degree=1
+# ) %>%
+#   set_engine("kernlab")
 # 
-# lr_auc = model_performance(fitted_model = lr_results$fitted_model, 
-#                            test_data = genome_test,
-#                            recipe = std_recipe)
+# svm_grid<-grid_regular(cost(range=c(10,20)),
+#                        levels=1,
+#                        original = T)
+# 
+# 
+# svm_results = model_tune(recipe = std_recipe,
+#                         train_data = genome_train,
+#                         cv_folds = 10,
+#                         model = genome_svm ,
+#                         tuning_params = svm_grid,
+#                         seed = 1)
 
-# lr_imp = model_vip(model = lr_results, baked_data = baked_train)
+#MARS ----
+genome_mars <- mars(
+  mode = "classification",
+  prod_degree = tune(),
+  num_terms = tune(),
+  prune_method = "backward" #find default
+) %>% 
+  set_engine("earth")
 
-#workflow to assess all models
+n = 10
+mars_grid = grid_regular(num_terms(range=c(1,110)), levels = n) %>%
+  cbind(prod_degree = c(rep(1,n),rep(2,n)))
 
-model_list <- list(genome_lr, genome_rf, genome_svm)
-hyperparam_list <- list(lr_grid, rf_grid, svm_grid)
+mars_results = model_tune(recipe = std_recipe,
+                         train_data = genome_train,
+                         cv_folds = 10,
+                         model = genome_mars ,
+                         tuning_params = mars_grid,
+                         seed = 1)
+
+mars_imp = model_vip(model = mars_results, baked_data = baked_train)
+
+#RDA ----
+genome_rda <- discrim::discrim_regularized(
+  mode = 'classification', 
+  frac_common_cov = tune(), #lambda
+  frac_identity = tune() #gamma
+) %>%
+  set_engine("klaR")
+
+#ref https://rdrr.io/cran/klaR/man/rda.html, https://discrim.tidymodels.org/reference/discrim_regularized.html
+
+rda_grid <- grid_regular(frac_common_cov=discrim::frac_common_cov(range=c(0,1)),
+                   discrim::frac_identity(range=c(0,1)),
+                   levels=10)
+
+#hack for weird bug
+names(rda_grid)[1] <- "frac_identity"
+
+rda_results <- model_tune(recipe = std_recipe,
+                          train_data = genome_train,
+                          cv_folds = 10,
+                          model = genome_rda ,
+                          tuning_params = rda_grid,
+                          seed = 1)
+
+#Workflow to assess all models----
+
+model_list <- list(genome_lr, genome_rf, genome_mars, genome_rda)
+hyperparam_list <- list(lr_grid, rf_grid, mars_grid, rda_grid)
 
 doParallel::registerDoParallel()
+#tune all the models
 tuned_models <- map2(.x = model_list,
              .y = hyperparam_list, 
              .f = model_tune,
              recipe = std_recipe,
              train_data = genome_train,
-             cv_fold = 10)
+             cv_fold = 5)
+
 
 saveRDS(tuned_models, file = "./results/models_tuned.rds")
 
-#model_performance <- function (fitted_model, test_data, recipe)
+#extract the finalised workflows for each model
+finalised_models <- list()
+for(i in 1:length(model_list)){
+  finalised_models[[i]] <- tuned_models[[i]]$fitted_model
+}
 
-##ignore below
+#check the performance of each model by mapping the model_performance()
+model_robustness <- map(.x = finalised_models, 
+                        .f = model_performance,
+                        test_data = genome_test, 
+                        recipe = std_recipe)
 
+#attach names for each AUC tibble
+for( i in 1:length(model_list)){
+  #add names to each list
+  names(model_robustness)[i] <- tuned_models[[i]]$model
+  
+  #add the ML method used for each AUC tibble
+  model_robustness[[i]] <- model_robustness[[i]] %>%
+    mutate(method = names(model_robustness)[i])
+}
 
+#bind all the AUC tibbles into the one dataframe
+robustness_df <- do.call(rbind, model_robustness)
+
+ggplot(data = robustness_df,
+       aes(x = severity+1, y = .estimate, color = method)) + #+1 to offset severity 0
+  geom_point() +
+  scale_x_log10() + 
+  ylab("AUC") +
+  xlab("severity")
 
 
