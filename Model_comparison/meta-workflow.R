@@ -179,6 +179,13 @@ tuned_models <- map2(.x = model_list,
 
 saveRDS(tuned_models, file = "./results/models_tuned.rds")
 
+#find variables of importance for each model
+vip_all <- map(.x = tuned_models,
+               .f = model_vip,
+               baked_data=baked_train)
+
+saveRDS(vip_all, file = "./results/vip_all.rds")
+
 #extract the finalised workflows for each model
 finalised_models <- list()
 for(i in 1:length(model_list)){
@@ -204,6 +211,7 @@ for( i in 1:length(model_list)){
 #bind all the AUC tibbles into the one dataframe
 robustness_df <- do.call(rbind, model_robustness)
 
+#auc plot across bottleneck severities
 ggplot(data = robustness_df,
        aes(x = severity+1, y = .estimate, color = method)) + #+1 to offset severity 0
   geom_point() +
@@ -211,4 +219,95 @@ ggplot(data = robustness_df,
   ylab("AUC") +
   xlab("severity")
 
+#plot of tuning params vs cv accuracy
+lr_tune <- tuned_models[[1]]$tune_tibble
+
+ggplot(data = lr_tune, 
+       aes(x = penalty, y = mean, color = mixture)) +
+  geom_point() +
+  geom_errorbar( aes(ymax = mean + std_err, ymin = mean - std_err))
+
+rf_tune <- tuned_models[[2]]$tune_tibble
+
+ggplot(data = rf_tune, 
+       aes(x = mtry, y = mean, color = min_n)) +
+  geom_point() +
+  geom_errorbar( aes(ymax = mean + std_err, ymin = mean - std_err))
+
+mars_tune <- tuned_models[[3]]$tune_tibble
+
+ggplot( data = mars_tune,
+        aes( x = num_terms, y = mean, color = prod_degree)) +
+  geom_point() +
+  geom_errorbar( aes(ymax = mean + std_err, ymin = mean - std_err))
+
+rda_tune <- tuned_models[[4]]$tune_tibble
+
+ggplot( data = rda_tune,
+        aes( x = frac_common_cov, y = mean, color = frac_identity)) +
+  geom_point() +
+  geom_errorbar( aes(ymax = mean + std_err, ymin = mean - std_err))
+
+#VIP for each model
+vip_df <- list()
+for (i in 1:length(vip_all)){
+  vip_df[i] <- vip_all[[i]][2]
+  
+  names(vip_df)[i] <- tuned_models[[i]]$model
+  
+  vip_df[[i]] <- vip_df[[i]] %>%
+    mutate(model = tuned_models[[i]]$model) %>% 
+    mutate(SS_type = case_when(stringr::str_extract(Variable, "^.{2}") %in% c("H_", "D_") ~ 'SFS',
+                               stringr::str_extract(Variable, "^.{2}") %in% c("h1", "h2") ~ 'Haplotype',
+                               stringr::str_extract(Variable, "^.{3}") %in% c("Zns", "LD_","w_m") ~ 'LD',
+                               TRUE ~ 'Other'))
+}
+
+vip_df <- do.call(rbind, vip_df)
+
+
+# mutate(type = case_when(stringr::str_extract(terms, "^.{2}") %in% c("H_", "D_") ~ 'SFS',
+#                         stringr::str_extract(terms, "^.{2}") %in% c("h1", "h2") ~ 'Haplotype',
+#                         stringr::str_extract(terms, "^.{3}") %in% c("Zns", "LD_","w_m") ~ 'LD',
+#                         TRUE ~ 'Other'
+# ))
+
+temp <- vip_df[[1]]
+temp %>% 
+  filter(str_detect(Variable, "D_"))
+
+str_detect(name, "TajD")
+
+vip_df <- do.call(rbind, vip_df)
+vip_df$Variable <- vip_df$Variable %>% as.factor()
+
+#plot SFS importance
+
+vip_df %>% 
+  dplyr::filter(SS_type == 'SFS') %>%
+  ggplot ( aes(x = Variable, y = Importance, color = model)) +
+  geom_point()
+
+vip_df %>% 
+  dplyr::filter(SS_type == 'Haplotype') %>%
+  ggplot ( aes(x = Variable, y = Importance, color = model)) +
+  geom_point()
+
+vip_df %>% 
+  dplyr::filter(SS_type == 'LD') %>%
+  ggplot ( aes(x = Variable, y = Importance, color = model)) +
+  geom_point()
+
+
+
+# for( i in 1:length(model_list)){
+#   #add names to each list
+#   names(model_robustness)[i] <- tuned_models[[i]]$model
+#   
+#   #add the ML method used for each AUC tibble
+#   model_robustness[[i]] <- model_robustness[[i]] %>%
+#     mutate(method = names(model_robustness)[i])
+# }
+
+#grid.arrange(grobs = pdps, ncol = 4)
 

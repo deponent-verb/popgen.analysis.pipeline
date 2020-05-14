@@ -20,7 +20,7 @@ model_vip <- function(model, baked_data){
   model_type = model$model
   fitControl <- caret::trainControl(method = "none", classProbs = TRUE)
   baked_data <- baked_data %>%
-    select(-demography)
+    select(-demography, -severity)
   hyperparams <- model$best_params
   
   if(model_type=="logistic_reg"){
@@ -51,7 +51,7 @@ model_vip <- function(model, baked_data){
       trControl = fitControl, 
       tuneGrid = data.frame(Cost = hyperparams$cost),
       metric = "accuracy"
-      )
+    )
   } else if (model_type=="mars"){
     caret_model = caret::train(
       sweep~.,
@@ -62,7 +62,16 @@ model_vip <- function(model, baked_data){
                             degree = hyperparams$prod_degree),
       metric = "accuracy"
     )
-  } else  {
+  } else if (model_type=="discrim_regularized"){
+    caret_model = caret::train(
+      sweep~.,
+      data = baked_data,
+      method = "rda",
+      trControl = fitControl,
+      tuneGrid = data.frame(gamma = hyperparams$frac_identity,
+                            lambda = hyperparams$frac_common_cov)
+    )
+  }else  {
     stop("model type not supported.")
   }
   

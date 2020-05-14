@@ -18,8 +18,7 @@ df = rbind(cpop,hard,neutral)
 write.csv(df, "~/work/MPhil/ml_review/data/snp_split/split_snp_set.csv")
 
 #exploratory data analysis
-
-snp_set<-read_csv("~/work/MPhil/ml_review/data/snp_split/split_snp_set.csv")
+snp_set<-read_csv("./data/bt_cpop.csv")
 snp_set$sweep = as.factor(snp_set$sweep)
 snp_set$s_coef=as.factor(snp_set$s_coef)
 levels(snp_set$sweep) = c(1,0)
@@ -139,7 +138,7 @@ pls.model =
 #Parallel Coordinates Plot
 
 genome_SS <- snp_set %>%
-  select(X1, sweep,H_1:category)
+  select(X1, sweep,H_1:h123_11,severity)
 
 genome_SS = genome_SS %>%
   rename(
@@ -156,7 +155,7 @@ colnames(genome_SS) [which(colnames(genome_SS)=="D_1"):which(colnames(genome_SS)
 #convert to long form
 genome_SS_long = 
   genome_SS %>%
-  pivot_longer(H_1:category)
+  pivot_longer(H_1:h123_11)
 
 labs  <- glue::glue("TajD[{1:11}]")
 genome_SS_long %>% 
@@ -168,7 +167,17 @@ genome_SS_long %>%
   scale_color_brewer(palette = "Set1") + 
   labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
   scale_x_discrete(labels = parse(text = labs)) +
-  facet_wrap("category")
+  facet_wrap("severity")
+
+genome_SS_long %>% 
+  filter(str_detect(name, "TajD")) %>% 
+  mutate(name = factor(name, levels = str_c("TajD_", 1:11))) %>% 
+  ggplot(aes(x = name, y = value, col = sweep)) + 
+  geom_line(aes(group = sim_id), alpha = 0.01) + 
+  geom_smooth(aes(group = sweep), se = FALSE) + 
+  scale_color_brewer(palette = "Set1") + 
+  labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
+  scale_x_discrete(labels = parse(text = labs)) 
 
 labs  <- glue::glue("H[{1:11}]")
 genome_SS_long %>% 

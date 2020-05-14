@@ -2,10 +2,11 @@ pacman::p_load(tidyverse)
 library(tidymodels)
 
 # load in cleaned data from data cleaning script
+genomes = read_csv("./data/bt_cpop.csv")
 
 #Data cleaning. Take out bottleneck info and selection coefficient for now. ----
-genome_SS  <- snp_set %>% 
-  filter (demography == 'cpop') %>%
+genome_SS  <- genomes %>% 
+  #filter (demography == 'cpop') %>%
   dplyr::select(sweep, H_1:h123_11)
 genome_SS
 
