@@ -40,7 +40,7 @@ genome_test = testing (genome_split)
 std_recipe <- recipe(sweep ~., data=genome_train) %>% #set sweep as response variable. everything else is a predictor.
   update_role(demography, new_role = 'demography') %>% #remove demography as a predictor
   update_role(severity, new_role = 'demography') %>% #remove demography as a predictor
-  step_corr(all_predictors(),threshold = 0.8) %>% #remove all highly correlated predictors
+##  step_corr(all_predictors(),threshold = 0.8) %>% #remove all highly correlated predictors
   step_normalize(all_predictors()) %>% #normalize all predictors
   prep()
 
@@ -57,9 +57,9 @@ genome_lr = logistic_reg(
   set_engine("glmnet")
 
 #Create set of tuning parameters
-lr_grid = grid_regular(penalty(range=c(0,0.1)),
+lr_grid = grid_regular(penalty(range=c(0,0.2)),
                                mixture(range=c(0,1)),
-                       levels=11, 
+                       levels=10, 
                        original = F)
 
 lr_results = model_tune(recipe = std_recipe,
@@ -232,7 +232,8 @@ rf_tune <- tuned_models[[2]]$tune_tibble
 ggplot(data = rf_tune, 
        aes(x = mtry, y = mean, color = min_n)) +
   geom_point() +
-  geom_errorbar( aes(ymax = mean + std_err, ymin = mean - std_err))
+  geom_errorbar( aes(ymax = mean + std_err, ymin = mean - std_err)) +
+  ylab("cv accuracy")
 
 mars_tune <- tuned_models[[3]]$tune_tibble
 
@@ -266,17 +267,11 @@ for (i in 1:length(vip_all)){
 vip_df <- do.call(rbind, vip_df)
 
 
-# mutate(type = case_when(stringr::str_extract(terms, "^.{2}") %in% c("H_", "D_") ~ 'SFS',
-#                         stringr::str_extract(terms, "^.{2}") %in% c("h1", "h2") ~ 'Haplotype',
-#                         stringr::str_extract(terms, "^.{3}") %in% c("Zns", "LD_","w_m") ~ 'LD',
-#                         TRUE ~ 'Other'
-# ))
-
-temp <- vip_df[[1]]
-temp %>% 
-  filter(str_detect(Variable, "D_"))
-
-str_detect(name, "TajD")
+# temp <- vip_df[[1]]
+# temp %>% 
+#   filter(str_detect(Variable, "D_"))
+# 
+# str_detect(name, "TajD")
 
 vip_df <- do.call(rbind, vip_df)
 vip_df$Variable <- vip_df$Variable %>% as.factor()
@@ -297,6 +292,36 @@ vip_df %>%
   dplyr::filter(SS_type == 'LD') %>%
   ggplot ( aes(x = Variable, y = Importance, color = model)) +
   geom_point()
+
+##Hub's version
+
+library(data.table)
+vip_df <-data.table(vip_df)
+gsub(x = vip_df$Variable, pattern = "_\\d+$", replacement = "")
+vip_df[, Stat := gsub(x = Variable, pattern = "_\\d+$", replacement = "")]
+vip_df[, Window := as.numeric(gsub(x = Variable, pattern = ".*_(\\d+$)", replacement = "\\1"))]
+
+vip_df %>%
+  dplyr::filter(SS_type == 'SFS') %>%
+  ggplot(aes(x = Window, y = Importance, col = model)) +
+  geom_point() +
+  facet_wrap("Stat")
+
+vip_df %>%
+  dplyr::filter(SS_type == 'Haplotype') %>%
+  ggplot(aes(x = Window, y = Importance, col = model)) +
+  geom_point() +
+  facet_wrap("Stat")
+
+vip_df %>%
+  dplyr::filter(Stat == 'D') %>%
+  ggplot(aes(x = Window, y = Importance, col = model)) +
+  geom_point() +
+  facet_wrap("Stat")
+
+
+#contrived shenanagens
+
 
 
 
