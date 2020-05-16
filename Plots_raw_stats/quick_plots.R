@@ -2,7 +2,7 @@ library(ggplot2)
 library(data.table)
 library(cowplot)
 
-setwd("~/work/Adelaide/Anthony__MPhil/Quick_help_stuff/")
+setwd("~/repos/popgen.analysis.pipeline/Plots_raw_stats/")
 
 
 # Looking at variable importance
@@ -21,7 +21,7 @@ ggplot(vip, aes(factor(Window), Importance, col=model)) + geom_point() + geom_li
 
 # Looking at raw data
 
-raw = fread(input = "bt_cpop.csv")
+raw = fread(input = "../data/bt_cpop.csv")
 
 raw[, t1 := as.numeric(gsub(demography, pattern = "t1:(\\d+)_.*", replacement = "\\1"))]
 raw[, s := as.numeric(gsub(demography, pattern = "t1:\\d+_s:(.+)_t2.*", replacement = "\\1"))]
