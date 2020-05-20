@@ -132,8 +132,6 @@ genome_pls <- step_pls(recipe = gen_rec,
 #   step_scale(starts_with("H"),starts_with("D")) %>%
 #   prep()
 
-pls.model = 
-
 
 #Parallel Coordinates Plot
 
