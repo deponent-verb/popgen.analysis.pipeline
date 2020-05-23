@@ -45,5 +45,5 @@ b=Sys.time()
 
 final_df = do.call(rbind,df)
 
-readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/data/dataframes/base_split/snp_cpop.csv")
+readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/hubsdata/dataframes/snp_cpop.csv")
 b-a
