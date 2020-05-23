@@ -42,7 +42,7 @@ df = foreach(i = 1:length(genomes)) %dopar% {
   .libPaths(libs)
   
   popgen.tools::generate_df(sim_list = genomes[[i]],nwins = 11,
-                            split_type="base",snp=1000,form="wide",
+                            split_type="mut",snp=1000,form="wide",
                             LD_downsample = T, ds_prop = 0.25)
 }
 b=Sys.time()
