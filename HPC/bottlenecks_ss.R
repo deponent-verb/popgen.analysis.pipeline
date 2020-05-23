@@ -24,7 +24,7 @@ a=Sys.time()
 
 #Read all rds files in a directory
 
-setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/constant_pop")
+setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/bottlenecks")
 names = list.files(pattern=".rds")
 folds = split(names, as.factor(1:cores))
 genomes = lapply(folds, function(d){ lapply(d,readRDS)})
@@ -45,5 +45,5 @@ b=Sys.time()
 
 final_df = do.call(rbind,df)
 
-readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/data/dataframes/base_split/snp_cpop.csv")
+readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/data/dataframes/base_split/snp_btl.csv")
 b-a
