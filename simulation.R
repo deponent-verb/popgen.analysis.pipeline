@@ -71,10 +71,12 @@ foreach(s = 1:length(selection)) %dopar%{
 }
 b=Sys.time()
 
-# constant popsize simulations
+#1000 sims for 18 bottlenecks, 7 s_coef took 1.33 days
+
+# constant popsize simulations ----
 
 nsim=1000
-setwd("~/work/MPhil/ml_review/data/hubs_data/constantpop/")
+setwd("~/work/MPhil/ml_review/data/hubs_data/constant_pop/")
 sweep_type="hard"
 
 cores=detectCores()
