@@ -28,6 +28,7 @@ setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/constant_pop")
 all_names = list.files(pattern=".rds")
 
 #randomly sample some simulations to generate the df
+set.seed(1)
 names = sample(all_names, size = 700)
 folds = split(names, as.factor(1:cores))
 genomes = lapply(folds, function(d){ lapply(d,readRDS)})
