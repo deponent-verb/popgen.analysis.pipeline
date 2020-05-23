@@ -25,7 +25,10 @@ a=Sys.time()
 #Read all rds files in a directory
 
 setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/constant_pop")
-names = list.files(pattern=".rds")
+all_names = list.files(pattern=".rds")
+
+#randomly sample some simulations to generate the df
+names = sample(all_names, size = 700)
 folds = split(names, as.factor(1:cores))
 genomes = lapply(folds, function(d){ lapply(d,readRDS)})
 
@@ -39,7 +42,7 @@ df = foreach(i = 1:length(genomes)) %dopar% {
   
   popgen.tools::generate_df(sim_list = genomes[[i]],nwins = 11,
                             split_type="base",snp=1000,form="wide",
-                            LD_downsample = T, ds_prop = 0.2)
+                            LD_downsample = T, ds_prop = 0.25)
 }
 b=Sys.time()
 
