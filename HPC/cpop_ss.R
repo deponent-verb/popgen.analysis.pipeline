@@ -29,8 +29,8 @@ all_names = list.files(pattern=".rds")
 
 #randomly sample some simulations to generate the df
 set.seed(1)
-names = sample(all_names, size = 700)
-folds = split(names, as.factor(1:cores))
+#all_names = sample(all_names, size = 700, replace = F)
+folds = split(all_names, as.factor(1:cores))
 genomes = lapply(folds, function(d){ lapply(d,readRDS)})
 
 
