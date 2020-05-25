@@ -43,8 +43,8 @@ df = foreach(i = 1:length(sim_groups)) %dopar% {
   .libPaths(libs)
   
   #load a small set of 100 simulations
-  genomes = lapply(sim_groups[[i]], function(d){ lapply(d,readRDS)}) %>%
-    unlist(recursive = F)
+  genomes = lapply(sim_groups[[i]], function(d){ lapply(d,readRDS)}) 
+  genomes = unlist(genomes, recursive = F)
   
   #compute SS on the small set
   popgen.tools::generate_df(sim_list = genomes,nwins = 11,
