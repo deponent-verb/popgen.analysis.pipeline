@@ -28,25 +28,48 @@ setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/bottlenecks")
 all_names = list.files(pattern=".rds")
 
 set.seed(1)
-names = sample(all_names, size = 12600)
-folds = split(names, as.factor(1:cores))
-genomes = lapply(folds, function(d){ lapply(d,readRDS)})
+n = length(all_names)/500
+sim_groups = split(all_names, as.factor(1:n))
 
 
 doParallel::registerDoParallel(cl,cores = cores)
 
-df = foreach(i = 1:length(genomes)) %dopar% {
-  # .libPaths(c("/fast/users/a1708050/local/RLibs",.libPaths()))
-  #clusterEvalQ(cl, .libPaths("/fast/users/a1708050/local/RLibs"))
-  .libPaths(libs)
+df = foreach(i = 1:length(sim_groups)) %dopar% {
   
-  popgen.tools::generate_df(sim_list = genomes[[i]],nwins = 11,
+  #ensure correct library and directory for each core
+  .libPaths(libs)
+  setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/constant_pop")
+  
+  #load a small set of 100 simulations
+  genomes = lapply(sim_groups[[i]], function(d){ lapply(d,readRDS)}) 
+  genomes = unlist(genomes, recursive = F)
+  
+  #compute SS on the small set
+  popgen.tools::generate_df(sim_list = genomes,nwins = 11,
                             split_type="mut",snp=1000,form="wide",
                             LD_downsample = T, ds_prop = 0.25)
+  
+  #remove the simulations from memory once we finished computing SS
+  #rm(genomes)
 }
-b=Sys.time()
 
-final_df = do.call(rbind,df)
+final_df = data.table::rbindlist(df, use.names = T, fill = F, idcol = T)
+readr::write_csv(final_df, path= "/fast/users/a1708050/mphil/ml_review/hubsdata/dataframes/snp_btl.csv")
 
-readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/hubsdata/dataframes/snp_btl.csv")
-b-a
+## old code below. remove late.
+
+# df = foreach(i = 1:length(genomes)) %dopar% {
+#   # .libPaths(c("/fast/users/a1708050/local/RLibs",.libPaths()))
+#   #clusterEvalQ(cl, .libPaths("/fast/users/a1708050/local/RLibs"))
+#   .libPaths(libs)
+#   
+#   popgen.tools::generate_df(sim_list = genomes[[i]],nwins = 11,
+#                             split_type="mut",snp=1000,form="wide",
+#                             LD_downsample = T, ds_prop = 0.25)
+# }
+# b=Sys.time()
+# 
+# final_df = do.call(rbind,df)
+# 
+# readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/hubsdata/dataframes/snp_btl.csv")
+# b-a
