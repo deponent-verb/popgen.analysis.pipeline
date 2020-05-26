@@ -38,7 +38,7 @@ df = foreach(i = 1:length(sim_groups)) %dopar% {
   
   #ensure correct library and directory for each core
   .libPaths(libs)
-  setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/constant_pop")
+  setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/bottlenecks")
   
   #load a small set of 100 simulations
   genomes = lapply(sim_groups[[i]], function(d){ lapply(d,readRDS)}) 
