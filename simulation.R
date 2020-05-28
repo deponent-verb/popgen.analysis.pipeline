@@ -10,8 +10,8 @@ nBases=1e6
 samplesize=100
 discoal_path="~/work/programs/discoal/discoal"
 
-#sweeps are recently fixed (1 generation from sampling)
-fix=1
+#sweeps are recently fixed at time of sampling
+fix=0
 #starting frequency for soft sweeps 
 start_f=0.1
 
@@ -22,8 +22,8 @@ start_f=0.1
 # Bottleneck scenarios.
 
 bottlenecks = list()
-recovery = c(1600, 8000)
-duration = c(80, 800, 8000)
+duration = c(1600, 8000) #t1 = duration + t2
+recovery = c(80, 800, 8000) #t2
 strength = c(0.05, 0.1, 0.5)
 
 counter=1
@@ -43,27 +43,26 @@ selection=c(0,100,250,500,750,1000,2000)/(2*Ne)
 
 ## Simulation Loops ----
 
-nsim=600
-setwd("~/work/MPhil/data/bottleneck_sims(neutral)/")
+nsim=1000
+setwd("~/work/MPhil/ml_review/data/hubs_data/bottlenecks/")
 sweep_type="hard"
 
 #loop for hard sweeps, with bottlenecks
 
-doParallel::registerDoParallel()
+cores=detectCores()
+cl<-makeCluster(cores)
+doParallel::registerDoParallel(cl,cores = cores)
+
 a=Sys.time()
-for(s in selection){
+foreach(s = 1:length(selection)) %dopar%{
   #  print(s)
   for(b in bottlenecks){
     for(i in 1:nsim){
-      # print(b$size[1])
-      # print(b$time[1])
-      # print(b$time[2])
-      # print(s)
-      sim = discoal_sim(mu=mu,recomb_rate = recomb_rate, Ne = Ne,
+      sim = popgen.tools::discoal_sim(mu=mu,recomb_rate = recomb_rate, Ne = Ne,
                         genome_length = nBases, samplesize = samplesize,
-                        s = s, discoal_path = discoal_path,
+                        s = selection[s], discoal_path = discoal_path,
                         sweep=sweep_type, fix_time = 1, popsize_changes = b)
-      name = paste("hardsim_s",s,"_n",i,"_b",b$size[1],"_t1",b$time[1],"_t2",b$time[2],
+      name = paste("hardsim_s",selection[s],"_n",i,"_b",b$size[1],"_t1",b$time[1],"_t2",b$time[2],
                    ".rds",sep="")
       print(name)
       saveRDS(sim,file=name)
@@ -72,10 +71,12 @@ for(s in selection){
 }
 b=Sys.time()
 
-# constant popsize simulations
+#1000 sims for 18 bottlenecks, 7 s_coef took 1.33 days
 
-nsim=600
-setwd("~/work/MPhil/ml_review/data/constantpop/")
+# constant popsize simulations ----
+
+nsim=1000
+setwd("~/work/MPhil/ml_review/data/hubs_data/constant_pop/")
 sweep_type="hard"
 
 cores=detectCores()
@@ -85,7 +86,7 @@ doParallel::registerDoParallel(cl,cores = cores)
 
 a=Sys.time()
 foreach(s = 1:length(selection)) %dopar% {
-    for(i in 101:(nsim+100)) {
+    for(i in 1:nsim) {
       sim = popgen.tools::discoal_sim(mu=mu,recomb_rate = recomb_rate, Ne = Ne,
                         genome_length = nBases, samplesize = samplesize,
                         s = selection[s], discoal_path = discoal_path,
@@ -96,12 +97,6 @@ foreach(s = 1:length(selection)) %dopar% {
       saveRDS(sim,file=name)
     }
 }
-
 b=Sys.time()
 
-# foreach(s = 1:length(selection)) %dopar% {
-#   print(selection[s])
-# }
-
-
-
+#20mins to do 100, for each 7 selection coef

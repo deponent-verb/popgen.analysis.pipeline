@@ -273,7 +273,6 @@ vip_df <- do.call(rbind, vip_df)
 # 
 # str_detect(name, "TajD")
 
-vip_df <- do.call(rbind, vip_df)
 vip_df$Variable <- vip_df$Variable %>% as.factor()
 
 #plot SFS importance
@@ -314,7 +313,7 @@ vip_df %>%
   facet_wrap("Stat")
 
 vip_df %>%
-  dplyr::filter(Stat == 'D') %>%
+  dplyr::filter(Stat == 'w_max') %>%
   ggplot(aes(x = Window, y = Importance, col = model)) +
   geom_point() +
   facet_wrap("Stat")
