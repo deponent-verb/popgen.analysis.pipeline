@@ -21,13 +21,13 @@ ggplot(vip, aes(factor(Window), Importance, col=model)) + geom_point() + geom_li
 
 # Looking at raw data
 
-raw = fread(input = "../data/bt_cpop.csv")
+raw = fread(input = "../data/0.25ds_set.csv")
 
-raw[, t1 := as.numeric(gsub(demography, pattern = "t1:(\\d+)_.*", replacement = "\\1"))]
-raw[, s := as.numeric(gsub(demography, pattern = "t1:\\d+_s:(.+)_t2.*", replacement = "\\1"))]
-raw[, t2 := as.numeric(gsub(demography, pattern = ".*_t2:(.*)$", replacement = "\\1"))]
-raw[, Duration := t2]
-raw[, Onset := t1-t2]
+raw[, t1 := bottle_time1]
+raw[, s := bottle_size1]
+raw[, t2 := bottle_time2]
+raw[, Duration := t1-t2]
+raw[, Onset := t2]
 raw[, Strength := s]
 
 # Melting the data
@@ -53,7 +53,7 @@ plot_grid(p1, p2, labels = c("Const", "Bottleneck"))
 p1 = ggplot(raw_m[severity == 0], aes(Window, Value, col=factor(s_coef))) + geom_smooth() + facet_wrap("Statistic", scales = "free_y", ncol=2)
 
 # Difficult bottleneck:
-p2 = ggplot(raw_m[demography == "t1:1680_s:0.05_t2:1600"], aes(Window, Value, col=factor(s_coef))) + geom_smooth() + facet_wrap("Statistic", scales = "free_y", ncol=2)
+p2 = ggplot(raw_m[severity == 80], aes(Window, Value, col=factor(s_coef))) + geom_smooth() + facet_wrap("Statistic", scales = "free_y", ncol=2)
 
 plot_grid(p1, p2, labels = c("Const", "Bottleneck"))
 
@@ -63,7 +63,7 @@ plot_grid(p1, p2, labels = c("Const", "Bottleneck"))
 p1 = ggplot(raw_m[severity == 0], aes(factor(Window), Value, fill=factor(s_coef))) + geom_violin(scale = "width") + facet_wrap("Statistic", scales = "free_y", nrow=2)
 
 # Difficult bottleneck:
-p2 = ggplot(raw_m[demography == "t1:1680_s:0.05_t2:1600"], aes(factor(Window), Value, fill=factor(s_coef))) + geom_violin(scale = "width") + facet_wrap("Statistic", scales = "free_y", nrow=2)
+p2 = ggplot(raw_m[severity == 80], aes(factor(Window), Value, fill=factor(s_coef))) + geom_violin(scale = "width") + facet_wrap("Statistic", scales = "free_y", nrow=2)
 
 plot_grid(p1, p2, labels = c("Const", "Bottleneck"), nrow = 2)
 
