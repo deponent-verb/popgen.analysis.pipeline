@@ -1,0 +1,100 @@
+---
+title: "Dataframe_generation"
+author: "Anthony Kwong"
+date: "27/05/2020"
+output: 
+  html_document:
+    theme: spacelab
+    number_sections: yes
+    df_print: paged
+    toc: true
+    toc_float: true
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This tutorial will show you how to compute popgen summary statistics and make a dataframe using the popgen.tools package. This tutorial assumes that you already have some data that you want to compute SS on. Each row in the dataframe will correspond to one observation / simulation. For each observation, you should have a genome matrix and a corresponding position vector.
+
+The genome matrix is a matrix of 0's and 1's, where the rows are the samples and the columns are the SNPs. Since we are using the infinite sites model, 0 indicates an ancestral allele and 1 indicates a derived allele. Element i,j is the allele of the ith sample at the jth SNP position/segregating site.
+
+I will simulate one here. 
+
+```{r}
+set.seed(1707)
+  SNP = 500
+  nsam = 200
+  G = matrix(sample(0:1, size = SNP*nsam, replace = TRUE), nc = SNP)
+```
+
+The position vector contains the positions of each segregating site in the genome matrix. Each position is represented by a real number between 0,1. Note the position vector must be in ascending order. It's dimension (length in compsci) must be the number of columns in the genome matrix. 
+
+```{r}
+set.seed(1688)
+pos = runif( n = ncol(G), 
+             min = 0,
+             max = 1) 
+pos = sort(pos)
+```
+
+
+Each observation must be turned into a simulation object using the sim_obj constructor. I have set some argument as NA as they are not relevant here. Those are used when the simulations are done within popgen.tools. I set the sweep to "hard" indicating a hard selective sweep and a selection coeficient of 0.1.
+
+```{r}
+library(popgen.tools)
+obs <- sim_obj(cmd = NA,
+               seeds = NA,
+               segsites = ncol(G),
+               positions = pos,
+               genome_matrix = G,
+               sweep ="hard",
+               select_coeff = 0.1 )
+```
+                  
+We can compute the summary statistics using the sum_stats function. The ID variable is an arbitrary number of your choice. We are going to break up our genome matrix into a series of equal, non-overlapping windows to compute summary statistics. 
+
+In this case we want 4 windows (nwins = 4) and each window must have roughly the same number of SNPs (split_type = "mut"). 
+
+The snp argument is used to trim outer columns of the genome matrix. For this example, we will set snp to 450 meaning that we will retain the central 450 SNPs. 
+
+Computing LD statistics is comutationally intensive. To make things faster, we can randomly downsample columns of the genome matrix. In this case, we will downsample 10% of the columns. 
+
+You can find the full documentation in ?sum_stats. 
+
+```{r}
+obs_ss = sum_stats(
+  sim = obs,
+  nwins = 4,
+  ID = 1, 
+  split_type = "mut",
+  snp=450,
+  LD_downsample = T,
+  ds_prop = 0.1
+)
+```
+```{r}
+obs_ss
+```
+
+Since we broke our observation into 4 windows, each summary statistic has 4 values in the final dataframe. For example, D_4 is the value of Tajima's D on the 4th window. 
+
+You can compute summary statistics on multiple simulations using the generate_df function. This is similar to sum_stats() but requires you a list of simulation objects as input. 
+
+```{r}
+obs_list = list(obs, obs)
+obs_df = generate_df(sim_list = obs_list,
+                     nwins = 4,
+                     split_type = "mut",
+                     snp=450,
+                     LD_downsample = T,
+                     ds_prop = 0.1
+)
+```
+```{r}
+obs_df
+```
+
+
+

@@ -2,11 +2,11 @@ pacman::p_load(tidyverse)
 library(tidymodels)
 
 # load in cleaned data from data cleaning script
-genomes = read_csv("./data/bt_cpop.csv")
+genomes = read_csv("~/work/MPhil/ml_review/data/hubs_data/dataframes/0.25ds_set.csv")
 
 #Data cleaning. Take out bottleneck info and selection coefficient for now. ----
 genome_SS  <- genomes %>% 
-  #filter (demography == 'cpop') %>%
+  filter (demography == 'cpop') %>%
   dplyr::select(sweep, H_1:h123_11)
 genome_SS
 
@@ -25,7 +25,7 @@ tidy_pca <- tidy(pc_all, 2) #take the loadings on each PC. Entered 2 because our
 
 #plot the PC loadings for the top 4 PC's. 
 tidy_pca %>%
-  filter(component %in% c("PC1","PC2","PC3","PC4")) %>% #plot first 4 PC's
+  filter(component %in% c("PC1","PC2")) %>% #plot first 4 PC's
   mutate(component = fct_inorder(component)) %>% #make sure PC's are in order
   ggplot (aes(value, terms, fill=terms)) + 
   geom_col(show.legend = F) + 
