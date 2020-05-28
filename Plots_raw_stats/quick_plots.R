@@ -32,7 +32,7 @@ raw[, Strength := s]
 
 # Melting the data
 
-raw_m = melt(raw, measure.vars = 8:117, variable.name = "Statistic_Window", value.name = "Value")
+raw_m = melt(raw, measure.vars = 8:139, variable.name = "Statistic_Window", value.name = "Value")
 raw_m[, Window := as.numeric(gsub(Statistic_Window, pattern = ".+_(\\d+)$", replacement = "\\1"))]
 raw_m[, Statistic := gsub(Statistic_Window, pattern = "^(.+)_\\d+$", replacement = "\\1")]
 
@@ -79,6 +79,12 @@ ggplot(raw_m[Statistic == "D" & Window == 6 & severity != 0], aes(factor(s_coef)
 # Just Fay&Wu's H
 ggplot(raw_m[Statistic == "H" & Window == 6 & severity != 0], aes(factor(s_coef), Value, fill=factor(Strength))) + geom_violin(scale = "width") + facet_grid(Onset~Duration) + geom_hline(yintercept = 0, lty=2)
 
+# Number SNPs
+ggplot(raw_m[Statistic == "block_snp_length" & severity != 0], aes(Window, Value, col=factor(s_coef))) + geom_smooth() + facet_grid(Onset~Duration + Strength)
+
+ggplot(raw_m[Statistic == "block_base_length" & severity != 0], aes(Window, Value, col=factor(s_coef))) + geom_smooth() + facet_grid(Onset~Duration + Strength) + geom_hline(yintercept = 1/11, lty=2)
+
+
 # All stats
 
 listOfStats = raw_m[,unique(Statistic)]
@@ -87,7 +93,7 @@ p_list = lapply(listOfStats, function (x) {
   ggplot(raw_m[Statistic == x & Window == 6 & severity != 0], aes(factor(s_coef), Value, fill=factor(Strength))) + geom_violin(scale = "width") + facet_grid(Onset~Duration) + geom_hline(yintercept = 0, lty=2) + ggtitle(label=x)
 })
 
-plot_grid(plotlist = p_list, nrow = 2)
+plot_grid(plotlist = p_list, nrow = 4)
 
 
 # Look at stats for all bottlenecks, all windows, smooth interpolation
