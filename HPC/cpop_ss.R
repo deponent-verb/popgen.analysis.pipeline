@@ -29,7 +29,7 @@ all_names = list.files(pattern=".rds")
 
 #randomly sample some simulations to generate the df
 set.seed(1)
-#all_names = sample(all_names, size = 2000, replace = F)
+all_names = sample(all_names, size = 1000, replace = F)
 n = length(all_names)/500
 sim_groups = split(all_names, as.factor(1:n))
 
@@ -50,7 +50,7 @@ df = foreach(i = 1:length(sim_groups)) %dopar% {
   
   #compute SS on the small set
   popgen.tools::generate_df(sim_list = genomes,nwins = 11,
-                            split_type="mut",snp=1000,form="wide",
+                            split_type="base",snp=1000,form="wide",
                             LD_downsample = T, ds_prop = 0.25)
   
   #remove the simulations from memory once we finished computing SS
@@ -58,7 +58,7 @@ df = foreach(i = 1:length(sim_groups)) %dopar% {
 }
 
 final_df = data.table::rbindlist(df, use.names = T, fill = F, idcol = T)
-readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/hubsdata/dataframes/snp_cpop.csv")
+readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/hubsdata/dataframes/base_cpop.csv")
 
 
 # ### old loop. delete later if above works fine.

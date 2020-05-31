@@ -1,7 +1,7 @@
 pacman::p_load(mixOmics, tidyverse)
 
 #load data using data cleaning script
-
+snp_set = read_csv("~/work/MPhil/ml_review/data/hubs_data/dataframes/0.25ds_set.csv")
 
 #Data cleaning. Take out bottleneck info and selection coefficient for now. ----
 genome_SS  <- snp_set %>% 
