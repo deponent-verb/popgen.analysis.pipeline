@@ -17,7 +17,7 @@ if (is.numeric(slurm_ntasks)) {
 } else {
   cores = detectCores() # Figure out how many cores there are
 }
-cl<-makeCluster(cores)
+cl<-makeCluster(cores, outfile ="")
 
 cores
 
@@ -40,8 +40,8 @@ doParallel::registerDoParallel(cl,cores = cores)
 df = foreach(i = 1:length(sim_groups)) %dopar% {
   
   #ensure correct library and directory for each core
-  .libPaths(libs)
-  setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/constant_pop")
+  # .libPaths(libs)
+  # setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/constant_pop")
   
   print(sim_groups[[i]])
   
@@ -52,7 +52,7 @@ df = foreach(i = 1:length(sim_groups)) %dopar% {
   #compute SS on the small set
   popgen.tools::generate_df(sim_list = genomes,nwins = 11,
                             split_type="base",snp=1000,form="wide",
-                            LD_downsample = T, ds_prop = 0.25)
+                            LD_downsample = T, ds_prop = 0.1)
   
 }
 
