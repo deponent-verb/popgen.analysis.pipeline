@@ -1,3 +1,5 @@
+#bug catch script for the computation of summary statistics
+
 .libPaths(c("/fast/users/a1708050/local/RLibs",.libPaths()))
 
 library("popgen.tools")
@@ -29,8 +31,8 @@ all_names = list.files(pattern=".rds")
 
 #randomly sample some simulations to generate the df
 set.seed(1)
-all_names = sample(all_names, size = 1000, replace = F)
-n = length(all_names)/500
+all_names = sample(all_names, size = 80, replace = F)
+n = length(all_names)/8
 sim_groups = split(all_names, as.factor(1:n))
 
 doParallel::registerDoParallel(cl,cores = cores)
@@ -41,7 +43,9 @@ df = foreach(i = 1:length(sim_groups)) %dopar% {
   .libPaths(libs)
   setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/constant_pop")
   
-  #load a small set of 100 simulations
+  print(sim_groups[[i]])
+  
+  #load a small set of simulations from sim_groups
   genomes = lapply(sim_groups[[i]], function(d){ lapply(d,readRDS)}) 
   genomes = unlist(genomes, recursive = F)
   
@@ -50,28 +54,7 @@ df = foreach(i = 1:length(sim_groups)) %dopar% {
                             split_type="base",snp=1000,form="wide",
                             LD_downsample = T, ds_prop = 0.25)
   
-  #remove the simulations from memory once we finished computing SS
-  #rm(genomes)
 }
 
 final_df = data.table::rbindlist(df, use.names = T, fill = F, idcol = T)
-readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/hubsdata/dataframes/base_cpop.csv")
-
-
-# ### old loop. delete later if above works fine.
-# 
-# df = foreach(i = 1:length(sim_groups)) %dopar% {
-#   # .libPaths(c("/fast/users/a1708050/local/RLibs",.libPaths()))
-#   #clusterEvalQ(cl, .libPaths("/fast/users/a1708050/local/RLibs"))
-#   .libPaths(libs)
-#   
-#   popgen.tools::generate_df(sim_list = genomes[[i]],nwins = 11,
-#                             split_type="mut",snp=1000,form="wide",
-#                             LD_downsample = T, ds_prop = 0.25)
-# }
-# b=Sys.time()
-# 
-# final_df = do.call(rbind,df)
-# 
-# readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/hubsdata/dataframes/snp_cpop.csv")
-# b-a
+readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/hubsdata/dataframes/bugcatch_base_cpop.csv")

@@ -11,7 +11,7 @@ source("./Model_comparison/model_performance.R")
 
 #load data from cleaning script
 
-genomes = read_csv("./data/bt_cpop.csv")
+genomes = read_csv("~/work/MPhil/ml_review/data/hubs_data/dataframes/split_snp/0.25ds_set.csv")
 
 #truncate dataset to contain response and predictors only. Used for model fitting.
 
