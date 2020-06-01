@@ -40,8 +40,8 @@ doParallel::registerDoParallel(cl,cores = cores)
 df = foreach(i = 1:length(sim_groups)) %dopar% {
   
   #ensure correct library and directory for each core
-  # .libPaths(libs)
-  # setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/constant_pop")
+  .libPaths(libs)
+  setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/constant_pop")
   
   print(sim_groups[[i]])
   
