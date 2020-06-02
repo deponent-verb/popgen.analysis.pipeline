@@ -40,8 +40,8 @@ doParallel::registerDoParallel(cl,cores = cores)
 df = foreach(i = 1:length(sim_groups)) %dopar% {
   
   #ensure correct library and directory for each core
-  .libPaths(libs)
-  setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/constant_pop")
+  # .libPaths(libs)
+  # setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/constant_pop")
   
   print(sim_groups[[i]])
   
@@ -55,6 +55,6 @@ df = foreach(i = 1:length(sim_groups)) %dopar% {
                             LD_downsample = T, ds_prop = 0.1)
   
 }
-
+#hardsim_s0.05_n163constant_pop.rds
 final_df = data.table::rbindlist(df, use.names = T, fill = F, idcol = T)
 readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/hubsdata/dataframes/bugcatch_base_cpop.csv")

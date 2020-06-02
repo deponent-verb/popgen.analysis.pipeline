@@ -30,7 +30,7 @@ all_names = list.files(pattern=".rds")
 #randomly sample some simulations to generate the df
 set.seed(1)
 all_names = sample(all_names, size = 1000, replace = F)
-n = length(all_names)/500
+n = length(all_names)/100
 sim_groups = split(all_names, as.factor(1:n))
 
 doParallel::registerDoParallel(cl,cores = cores)
