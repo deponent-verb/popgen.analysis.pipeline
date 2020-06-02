@@ -12,5 +12,5 @@
 
 # Execute the program
 # (The example here is a sequential bash script; use a suitable program for your case.)
-R CMD BATCH bottlenecks_ss.R
-cat bottlenecks_ss.Rout
+R CMD BATCH bottlenecks_ss2.R
+cat bottlenecks_ss2.Rout

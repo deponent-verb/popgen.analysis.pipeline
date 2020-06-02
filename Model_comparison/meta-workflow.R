@@ -40,7 +40,7 @@ genome_test = testing (genome_split)
 std_recipe <- recipe(sweep ~., data=genome_train) %>% #set sweep as response variable. everything else is a predictor.
   update_role(demography, new_role = 'demography') %>% #remove demography as a predictor
   update_role(severity, new_role = 'demography') %>% #remove demography as a predictor
-##  step_corr(all_predictors(),threshold = 0.8) %>% #remove all highly correlated predictors
+  step_corr(all_predictors(),threshold = 0.9) %>% #remove all highly correlated predictors
   step_normalize(all_predictors()) %>% #normalize all predictors
   prep()
 
@@ -48,25 +48,24 @@ baked_train <- bake(std_recipe, genome_train)
 
 #Designate model and hyperparameters ----
 
-#Logistical regression with L2 regularisation ----
+#Logistical regression with L1 regularisation ----
 genome_lr = logistic_reg(
   mode="classification",
   penalty = tune(),
-  mixture= tune()
+  mixture= 1
 ) %>%
   set_engine("glmnet")
 
 #Create set of tuning parameters
-lr_grid = grid_regular(penalty(range=c(0,0.2)),
-                               mixture(range=c(0,1)),
-                       levels=10, 
+lr_grid = grid_regular(penalty(range=c(0,0.1)) ,
+                       levels=5, 
                        original = F)
 
 lr_results = model_tune(recipe = std_recipe,
                         train_data = genome_train,
                         cv_folds = 10,
                         model = genome_lr ,
-                        tuning_params = lr_grid,
+                        tunin1.g_params = lr_grid,
                         seed = 1)
 
 lr_imp = model_vip(model = lr_results, baked_data = baked_train)

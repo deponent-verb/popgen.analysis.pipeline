@@ -24,14 +24,15 @@ a=Sys.time()
 
 #Read all rds files in a directory
 
-setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/constant_pop")
+setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/bottlenecks")
+i=2
 all_names = list.files(pattern=".rds")
+all_names = all_names[(42000*(i-1)+1) :(42000*i)]
 
-#randomly sample some simulations to generate the df
 set.seed(1)
-#all_names = sample(all_names, size = 1000, replace = F)
 n = length(all_names)/500
 sim_groups = split(all_names, as.factor(1:n))
+
 
 doParallel::registerDoParallel(cl,cores = cores)
 
@@ -39,7 +40,7 @@ df = foreach(i = 1:length(sim_groups)) %dopar% {
   
   #ensure correct library and directory for each core
   .libPaths(libs)
-  setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/constant_pop")
+  setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/bottlenecks")
   
   #load a small set of 100 simulations
   genomes = lapply(sim_groups[[i]], function(d){ lapply(d,readRDS)}) 
@@ -55,23 +56,4 @@ df = foreach(i = 1:length(sim_groups)) %dopar% {
 }
 
 final_df = data.table::rbindlist(df, use.names = T, fill = F, idcol = T)
-readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/hubsdata/dataframes/base_cpop.csv")
-
-
-# ### old loop. delete later if above works fine.
-# 
-# df = foreach(i = 1:length(sim_groups)) %dopar% {
-#   # .libPaths(c("/fast/users/a1708050/local/RLibs",.libPaths()))
-#   #clusterEvalQ(cl, .libPaths("/fast/users/a1708050/local/RLibs"))
-#   .libPaths(libs)
-#   
-#   popgen.tools::generate_df(sim_list = genomes[[i]],nwins = 11,
-#                             split_type="mut",snp=1000,form="wide",
-#                             LD_downsample = T, ds_prop = 0.25)
-# }
-# b=Sys.time()
-# 
-# final_df = do.call(rbind,df)
-# 
-# readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/hubsdata/dataframes/snp_cpop.csv")
-# b-a
+readr::write_csv(final_df, path= "/fast/users/a1708050/mphil/ml_review/hubsdata/dataframes/base_btl2.csv")

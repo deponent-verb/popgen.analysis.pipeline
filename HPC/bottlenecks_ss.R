@@ -25,7 +25,9 @@ a=Sys.time()
 #Read all rds files in a directory
 
 setwd("/fast/users/a1708050/mphil/ml_review/hubsdata/bottlenecks")
+i=1
 all_names = list.files(pattern=".rds")
+all_names = all_names[(42000*(i-1)+1) :(42000*i)]
 
 set.seed(1)
 n = length(all_names)/500
@@ -46,7 +48,7 @@ df = foreach(i = 1:length(sim_groups)) %dopar% {
   
   #compute SS on the small set
   popgen.tools::generate_df(sim_list = genomes,nwins = 11,
-                            split_type="mut",snp=1000,form="wide",
+                            split_type="base",snp=1000,form="wide",
                             LD_downsample = T, ds_prop = 0.25)
   
   #remove the simulations from memory once we finished computing SS
@@ -54,7 +56,7 @@ df = foreach(i = 1:length(sim_groups)) %dopar% {
 }
 
 final_df = data.table::rbindlist(df, use.names = T, fill = F, idcol = T)
-readr::write_csv(final_df, path= "/fast/users/a1708050/mphil/ml_review/hubsdata/dataframes/snp_btl.csv")
+readr::write_csv(final_df, path= "/fast/users/a1708050/mphil/ml_review/hubsdata/dataframes/base_btl1.csv")
 
 ## old code below. remove late.
 
