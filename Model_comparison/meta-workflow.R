@@ -81,7 +81,7 @@ genome_rf<-rand_forest(
 ) %>%
   set_engine("ranger")
 
-rf_grid<-grid_regular(mtry(range=c(10,100)),min_n(range=c(100,1000)),levels=10)
+rf_grid<-grid_regular(mtry(range=c(10,80)),min_n(range=c(100,1000)),levels=2)
 
 rf_results = model_tune(recipe = std_recipe,
                         train_data = genome_train,
@@ -124,7 +124,7 @@ genome_mars <- mars(
 ) %>% 
   set_engine("earth")
 
-n = 10
+n = 2
 mars_grid = grid_regular(num_terms(range=c(1,110)), levels = n) %>%
   cbind(prod_degree = c(rep(1,n),rep(2,n)))
 

@@ -48,7 +48,7 @@ df = foreach(i = 1:length(sim_groups)) %dopar% {
   
   #compute SS on the small set
   popgen.tools::generate_df(sim_list = genomes,nwins = 11,
-                            split_type="base",snp=1000,form="wide",
+                            split_type="base",trim_sim = F,form="wide",
                             LD_downsample = T, ds_prop = 0.25)
   
   #remove the simulations from memory once we finished computing SS
@@ -56,4 +56,4 @@ df = foreach(i = 1:length(sim_groups)) %dopar% {
 }
 
 final_df = data.table::rbindlist(df, use.names = T, fill = F, idcol = T)
-readr::write_csv(final_df, path= "/fast/users/a1708050/mphil/ml_review/hubsdata/dataframes/base_btl3.csv")
+readr::write_csv(final_df, path= "/fast/users/a1708050/mphil/ml_review/hubsdata/dataframes/notrim_base_btl3.csv")

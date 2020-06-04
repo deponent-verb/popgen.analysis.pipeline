@@ -22,4 +22,4 @@ null_index <- snp_set$demography == "t1:0_s:1_t2:0"
 snp_set$demography[null_index] <- 'cpop'
 snp_set$demography <- as.factor(snp_set$demography)
 
-write_csv(snp_set,"~/work/MPhil/ml_review/data/hubs_data/dataframes/0.25ds_set.csv")
+write_csv(snp_set,"~/work/MPhil/ml_review/data/hubs_data/dataframes/0.25ds_base_set.csv")
