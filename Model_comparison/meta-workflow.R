@@ -11,7 +11,7 @@ source("./Model_comparison/model_performance.R")
 
 #load data from cleaning script
 
-genomes = read_csv("~/work/MPhil/ml_review/data/hubs_data/dataframes/split_snp/0.25ds_set.csv")
+genomes = read_csv("~/work/MPhil/ml_review/data/hubs_data/dataframes/split_snp/0.25ds_snp_set.csv")
 
 #truncate dataset to contain response and predictors only. Used for model fitting.
 
@@ -46,6 +46,12 @@ std_recipe <- recipe(sweep ~., data=genome_train) %>% #set sweep as response var
 
 baked_train <- bake(std_recipe, genome_train)
 
+#downsample the training dataset for VIP calculations
+set.seed(2261941)
+k = dim(baked_train)[1]*0.1
+ds_baked_train = sample_n(baked_train, k)
+
+
 #Designate model and hyperparameters ----
 
 #Logistical regression with L1 regularisation ----
@@ -58,17 +64,17 @@ genome_lr = logistic_reg(
 
 #Create set of tuning parameters
 lr_grid = grid_regular(penalty(range=c(0,0.1)) ,
-                       levels=5, 
+                       levels=10, 
                        original = F)
 
 lr_results = model_tune(recipe = std_recipe,
                         train_data = genome_train,
                         cv_folds = 10,
                         model = genome_lr ,
-                        tunin1.g_params = lr_grid,
-                        seed = 1)
+                        tuning_params = lr_grid,
+                        seed = 162)
 
-lr_imp = model_vip(model = lr_results, baked_data = baked_train)
+lr_imp = model_vip(model = lr_results, baked_data = ds_baked_train)
 saveRDS(lr_imp, file = './results/lr_imp.rds')
 
 #RandomForest classifier
@@ -76,19 +82,19 @@ saveRDS(lr_imp, file = './results/lr_imp.rds')
 genome_rf<-rand_forest(
   mode="classification",
   mtry=tune(),
-  trees=100, #caret does built in 500 trees. ntrees doesn't matter.
+  trees=500, #caret does built in 500 trees. ntrees doesn't matter.
   min_n=tune()
 ) %>%
   set_engine("ranger")
 
-rf_grid<-grid_regular(mtry(range=c(10,80)),min_n(range=c(100,1000)),levels=2)
+rf_grid<-grid_regular(mtry(range=c(10,80)),min_n(range=c(100,1000)),levels=4)
 
 rf_results = model_tune(recipe = std_recipe,
                         train_data = genome_train,
                         cv_folds = 10,
                         model = genome_rf ,
                         tuning_params = rf_grid,
-                        seed = 1)
+                        seed = 2)
 
 rf_imp = model_vip(model = rf_results, baked_data = baked_train)
 saveRDS(rf_imp, file = './results/rf_imp.rds')
@@ -124,7 +130,7 @@ genome_mars <- mars(
 ) %>% 
   set_engine("earth")
 
-n = 2
+n = 5
 mars_grid = grid_regular(num_terms(range=c(1,110)), levels = n) %>%
   cbind(prod_degree = c(rep(1,n),rep(2,n)))
 
@@ -173,7 +179,7 @@ tuned_models <- map2(.x = model_list,
              .f = model_tune,
              recipe = std_recipe,
              train_data = genome_train,
-             cv_fold = 5)
+             cv_fold = 10)
 
 
 saveRDS(tuned_models, file = "./results/models_tuned.rds")
@@ -181,9 +187,10 @@ saveRDS(tuned_models, file = "./results/models_tuned.rds")
 #find variables of importance for each model
 vip_all <- map(.x = tuned_models,
                .f = model_vip,
-               baked_data=baked_train)
+               baked_data=ds_baked_train)
 
 saveRDS(vip_all, file = "./results/vip_all.rds")
+#11:27
 
 #extract the finalised workflows for each model
 finalised_models <- list()
@@ -213,7 +220,7 @@ robustness_df <- do.call(rbind, model_robustness)
 #auc plot across bottleneck severities
 ggplot(data = robustness_df,
        aes(x = severity+1, y = .estimate, color = method)) + #+1 to offset severity 0
-  geom_point() +
+  geom_line() +
   scale_x_log10() + 
   ylab("AUC") +
   xlab("severity")

@@ -2,11 +2,11 @@ pacman::p_load(tidyverse)
 library(tidymodels)
 
 # load in cleaned data from data cleaning script
-genomes = read_csv("~/work/MPhil/ml_review/data/hubs_data/dataframes/0.25ds_set.csv")
+genomes = read_csv("~/work/MPhil/ml_review/data/hubs_data/dataframes/split_snp/0.25ds_snp_set.csv")
 
 #Data cleaning. Take out bottleneck info and selection coefficient for now. ----
 genome_SS  <- genomes %>% 
-  filter (demography == 'cpop') %>%
+  #filter (demography == 'cpop') %>%
   dplyr::select(sweep, H_1:h123_11)
 genome_SS
 
@@ -61,10 +61,10 @@ genome_PCA_all %>%
   geom_point(alpha = 0.3) + 
   geom_density_2d() + 
   scale_color_brewer(palette = "Set1") +
-  ggtitle("PCA plot using all predictors") +
+  #ggtitle("PCA plot using all predictors") +
   theme(plot.title = element_text(hjust = 0.5)) 
 
-#get the loadings on each PC
+#get the loadings on each PC, -1 to remove response variable
 gpca <- prcomp(genome_SS[,-1], scale=T)
 
 #scree plot. This shows the percentage of variance explained by each PC.
@@ -76,6 +76,52 @@ plot(Value ~ Statistic, pc_load)
 
 ggplot(data = pc_load, aes(x = Statistic, y = Value) ) +
   geom_point()
+
+#PCA plot by selection coefficient ----
+
+genome_SS  <- genomes %>% 
+  dplyr::select(s_coef, H_1:h123_11)
+
+genome_SS$s_coef <- as.factor(genome_SS$s_coef)
+
+pc_all <- recipe(data = genome_SS, s_coef ~.) %>% #set our group to be sweep
+  step_normalize(all_predictors()) %>%  #standardise all predictors to have mean 0, var 1.
+  step_pca(all_predictors()) %>% #compute PCs
+  prep()
+
+genome_PCA_all = bake(pc_all, genome_SS)
+
+genome_PCA_all %>% 
+  #specify PC's as axis. Group by s_coef
+  ggplot(aes(x = PC1, y = PC2, col = s_coef)) + 
+  geom_point(alpha = 0.3) + 
+  geom_density_2d() + 
+  scale_color_brewer(palette = "Set1") +
+  #ggtitle("PCA plot using all predictors") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+#PCA plot by bottleneck severity
+
+genome_SS  <- genomes %>% 
+  dplyr::select(severity, H_1:h123_11)
+
+genome_SS$severity <- as.factor(genome_SS$severity)
+
+pc_all <- recipe(data = genome_SS, severity ~.) %>% #set our group to be sweep
+  step_normalize(all_predictors()) %>%  #standardise all predictors to have mean 0, var 1.
+  step_pca(all_predictors()) %>% #compute PCs
+  prep()
+
+genome_PCA_all = bake(pc_all, genome_SS)
+
+genome_PCA_all %>% 
+  #specify PC's as axis. Group by severity
+  ggplot(aes(x = PC1, y = PC2, col = severity)) + 
+  geom_point(alpha = 0.3) + 
+  geom_density_2d() + 
+  scale_color_brewer(palette = "Set1") +
+  #ggtitle("PCA plot using all predictors") +
+  theme(plot.title = element_text(hjust = 0.5)) 
 
 #PC loadings in depth ----
 #Group the summary statistics and look at their respective loadings on the top PC's.
@@ -106,7 +152,7 @@ pca_load <- tidy_pca %>%
 
 #boxplot of loadings grouped by type
 pca_load %>%
-  filter(component %in% c("PC1","PC2","PC3","PC4")) %>%
+  filter(component %in% c("PC1","PC2")) %>%
   ggplot(aes(y = value, color = type)) + 
   geom_boxplot() + 
   facet_wrap(~component) + 
@@ -114,7 +160,7 @@ pca_load %>%
 
 #boxplot of loadings grouped by statistic
 pca_load %>%
-  filter(component %in% c("PC1","PC2","PC3","PC4")) %>%
+  filter(component %in% c("PC1","PC2")) %>%
   ggplot(aes(y = value, color = stat, x = stat)) + 
   geom_boxplot() + 
   facet_wrap(~component) + 
@@ -122,7 +168,7 @@ pca_load %>%
 
 #boxplot of loadings grouped by window
 pca_load %>%
-  filter(component %in% c("PC1","PC2","PC3","PC4")) %>%
+  filter(component %in% c("PC1","PC2")) %>%
   ggplot(aes(y = value, color = window)) + 
   geom_boxplot() + 
   facet_wrap(~component) + 

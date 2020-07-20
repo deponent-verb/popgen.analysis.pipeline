@@ -45,7 +45,7 @@ selection=c(0,100,250,500,750,1000,2000)/(2*Ne)
 
 nsim=1000
 setwd("~/work/MPhil/ml_review/data/hubs_data/bottlenecks/")
-sweep_type="hard"
+sweep_type="soft"
 
 #loop for hard sweeps, with bottlenecks
 
@@ -55,7 +55,6 @@ doParallel::registerDoParallel(cl,cores = cores)
 
 a=Sys.time()
 foreach(s = 1:length(selection)) %dopar%{
-  #  print(s)
   for(b in bottlenecks){
     for(i in 1:nsim){
       sim = popgen.tools::discoal_sim(mu=mu,recomb_rate = recomb_rate, Ne = Ne,
@@ -71,13 +70,13 @@ foreach(s = 1:length(selection)) %dopar%{
 }
 b=Sys.time()
 
-#1000 sims for 18 bottlenecks, 7 s_coef took 1.33 days
+#1000 sims for 18 bottlenecks, 7 s_coef took 1.33 days on 4 cores
 
 # constant popsize simulations ----
 
 nsim=1000
 setwd("~/work/MPhil/ml_review/data/hubs_data/constant_pop/")
-sweep_type="hard"
+sweep_type="soft"
 
 cores=detectCores()
 cl<-makeCluster(cores)
