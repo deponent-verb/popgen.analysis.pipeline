@@ -39,5 +39,8 @@ vignettes/*.pdf
 # Large simulation files
 data/*.csv
 
+#fitted models results
+results/*.rds
+
 # .DS_Sore files
 .DS_Store

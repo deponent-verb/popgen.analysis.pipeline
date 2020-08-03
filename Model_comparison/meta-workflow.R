@@ -190,7 +190,9 @@ vip_all <- map(.x = tuned_models,
                baked_data=ds_baked_train)
 
 saveRDS(vip_all, file = "./results/vip_all.rds")
-#model fitting done ----
+#model fitting done 
+
+#Model performance -----
 
 #read data in for the plots 
 
@@ -349,3 +351,4 @@ vip_df %>%
   ggplot(aes(x = Window, y = Importance, col = model)) +
   geom_point() +
   facet_wrap("Stat")
+
