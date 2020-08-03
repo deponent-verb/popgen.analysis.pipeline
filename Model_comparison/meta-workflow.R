@@ -190,13 +190,22 @@ vip_all <- map(.x = tuned_models,
                baked_data=ds_baked_train)
 
 saveRDS(vip_all, file = "./results/vip_all.rds")
-#11:27
+#model fitting done ----
+
+#read data in for the plots 
+
+tuned_models <- readRDS("./results/models_tuned.rds")
+
+#need to reload ml libraries to predict. R needs this to know what methods to dispatch.
+pacman::p_load(ranger,glmnet,earth,klaR,workflows)
 
 #extract the finalised workflows for each model
 finalised_models <- list()
-for(i in 1:length(model_list)){
+for(i in 1:length(tuned_models)){
   finalised_models[[i]] <- tuned_models[[i]]$fitted_model
 }
+
+#need to load test data and recipe from above
 
 #check the performance of each model by mapping the model_performance()
 model_robustness <- map(.x = finalised_models, 
@@ -205,7 +214,7 @@ model_robustness <- map(.x = finalised_models,
                         recipe = std_recipe)
 
 #attach names for each AUC tibble
-for( i in 1:length(model_list)){
+for( i in 1:length(tuned_models)){
   #add names to each list
   names(model_robustness)[i] <- tuned_models[[i]]$model
   
@@ -220,7 +229,7 @@ robustness_df <- do.call(rbind, model_robustness)
 #auc plot across bottleneck severities
 ggplot(data = robustness_df,
        aes(x = severity+1, y = .estimate, color = method)) + #+1 to offset severity 0
-  geom_line() +
+  geom_point() +
   scale_x_log10() + 
   ylab("AUC") +
   xlab("severity")
@@ -229,9 +238,11 @@ ggplot(data = robustness_df,
 lr_tune <- tuned_models[[1]]$tune_tibble
 
 ggplot(data = lr_tune, 
-       aes(x = penalty, y = mean, color = mixture)) +
+       aes(x = penalty, y = mean)) +
   geom_point() +
-  geom_errorbar( aes(ymax = mean + std_err, ymin = mean - std_err))
+  geom_errorbar( aes(ymax = mean + std_err, ymin = mean - std_err))+
+  ylab("cv accuracy") +
+  xlab("lambda")
 
 rf_tune <- tuned_models[[2]]$tune_tibble
 
@@ -246,16 +257,32 @@ mars_tune <- tuned_models[[3]]$tune_tibble
 ggplot( data = mars_tune,
         aes( x = num_terms, y = mean, color = prod_degree)) +
   geom_point() +
-  geom_errorbar( aes(ymax = mean + std_err, ymin = mean - std_err))
+  geom_errorbar( aes(ymax = mean + std_err, ymin = mean - std_err)) +
+  ylab("cv accuracy") + 
+  labs(color = "degree")
 
 rda_tune <- tuned_models[[4]]$tune_tibble
 
 ggplot( data = rda_tune,
         aes( x = frac_common_cov, y = mean, color = frac_identity)) +
   geom_point() +
-  geom_errorbar( aes(ymax = mean + std_err, ymin = mean - std_err))
+  geom_errorbar( aes(ymax = mean + std_err, ymin = mean - std_err)) +
+  xlab("lambda") +
+  labs(color = "gamma") +
+  ylab("cv accuracy")
 
-#VIP for each model
+#overall AUC for each model
+
+preds <- predict(finalised_models[[4]], genome_test, type = 'prob')
+truth <- as.factor(genome_test$sweep)
+roc_auc(tibble(preds,truth), truth = truth, .pred_hard)
+  
+
+#VIP for each model ----
+vip_all <- readRDS(file = "./results/vip_all.rds")
+tuned_models <- readRDS("./results/models_tuned.rds")
+
+
 vip_df <- list()
 for (i in 1:length(vip_all)){
   vip_df[i] <- vip_all[[i]][2]
@@ -271,13 +298,6 @@ for (i in 1:length(vip_all)){
 }
 
 vip_df <- do.call(rbind, vip_df)
-
-
-# temp <- vip_df[[1]]
-# temp %>% 
-#   filter(str_detect(Variable, "D_"))
-# 
-# str_detect(name, "TajD")
 
 vip_df$Variable <- vip_df$Variable %>% as.factor()
 
@@ -324,20 +344,8 @@ vip_df %>%
   geom_point() +
   facet_wrap("Stat")
 
-
-#contrived shenanagens
-
-
-
-
-# for( i in 1:length(model_list)){
-#   #add names to each list
-#   names(model_robustness)[i] <- tuned_models[[i]]$model
-#   
-#   #add the ML method used for each AUC tibble
-#   model_robustness[[i]] <- model_robustness[[i]] %>%
-#     mutate(method = names(model_robustness)[i])
-# }
-
-#grid.arrange(grobs = pdps, ncol = 4)
-
+vip_df %>%
+  dplyr::filter(Stat == 'Zns') %>%
+  ggplot(aes(x = Window, y = Importance, col = model)) +
+  geom_point() +
+  facet_wrap("Stat")

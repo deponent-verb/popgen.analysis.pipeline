@@ -74,6 +74,17 @@ genome_SS_long %>%
   labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
   scale_x_discrete(labels = parse(text = labs))
 
+labs  <- glue::glue("h123[{1:11}]")
+genome_SS_long %>% 
+  filter(str_detect(name, "h123")) %>% 
+  mutate(name = factor(name, levels = str_c("h123_", 1:11))) %>% 
+  ggplot(aes(x = name, y = value, col = sweep)) + 
+  geom_line(aes(group = ID), alpha = 0.01) + 
+  geom_smooth(aes(group = sweep), se = FALSE) + 
+  scale_color_brewer(palette = "Set1") + 
+  labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
+  scale_x_discrete(labels = parse(text = labs))
+
 labs  <- glue::glue("LD_avg[{1:11}]")
 genome_SS_long %>% 
   filter(str_detect(name, "LD_avg")) %>% 
