@@ -8,6 +8,7 @@ library(tidymodels)
 source("./Model_comparison/model_tune.R")
 source("./Model_comparison/model_vip.R")
 source("./Model_comparison/model_performance.R")
+source("./Model_comparison/auc_scoef.R")
 
 #load data from cleaning script
 
@@ -16,7 +17,7 @@ genomes = read_csv("~/work/MPhil/ml_review/data/hubs_data/dataframes/split_snp/0
 #truncate dataset to contain response and predictors only. Used for model fitting.
 
 genomes_SS = genomes %>% 
-  dplyr::select(sweep,H_1:h123_11,demography,severity)
+  dplyr::select(sweep,H_1:h123_11,demography,severity,s_coef)
 skimr::skim(genomes_SS)
 genomes_SS$demography <- as.factor(genomes_SS$demography)
 #genomes_SS$severity <- as.factor(genomes_SS$severity)
@@ -28,18 +29,14 @@ genome_split<-initial_split(genomes_SS,prop=0.8)
 genome_train = training (genome_split)
 genome_test = testing (genome_split)
 
-#remove demography as a predictor
-# genome_train <- genome_train %>% 
-#   select(-demography)
-#update_role(sample, new_role = "id variable") %>%
-
 #Recipe design ----
 
 #The standard recipe just standardizes all the predictors (mean=0, var =1) 
 
 std_recipe <- recipe(sweep ~., data=genome_train) %>% #set sweep as response variable. everything else is a predictor.
   update_role(demography, new_role = 'demography') %>% #remove demography as a predictor
-  update_role(severity, new_role = 'demography') %>% #remove demography as a predictor
+  update_role(s_coef, new_role = 'demography') %>% #remove s_coef as predictor
+  update_role(severity, new_role = 'demography') %>% #remove severity as a predictor
   step_corr(all_predictors(),threshold = 0.9) %>% #remove all highly correlated predictors
   step_normalize(all_predictors()) %>% #normalize all predictors
   prep()
@@ -209,6 +206,8 @@ for(i in 1:length(tuned_models)){
 
 #need to load test data and recipe from above
 
+#AUC for demographies
+
 #check the performance of each model by mapping the model_performance()
 model_robustness <- map(.x = finalised_models, 
                         .f = model_performance,
@@ -235,6 +234,52 @@ ggplot(data = robustness_df,
   scale_x_log10() + 
   ylab("AUC") +
   xlab("severity")
+
+model_robustness <- map(.x = finalised_models, 
+                        .f = model_performance,
+                        test_data = genome_test, 
+                        recipe = std_recipe)
+
+#attach names for each AUC tibble
+for( i in 1:length(tuned_models)){
+  #add names to each list
+  names(model_robustness)[i] <- tuned_models[[i]]$model
+  
+  #add the ML method used for each AUC tibble
+  model_robustness[[i]] <- model_robustness[[i]] %>%
+    mutate(method = names(model_robustness)[i])
+}
+
+### AUC for selection s_coef
+
+#check the performance of each model by mapping the model_performance()
+model_robustness_scoef <- map(.x = finalised_models, 
+                        .f = auc_scoef,
+                        test_data = genome_test, 
+                        recipe = std_recipe)
+
+#attach names for each AUC tibble
+for( i in 1:length(tuned_models)){
+  #add names to each list
+  names(model_robustness_scoef)[i] <- tuned_models[[i]]$model
+  
+  #add the ML method used for each AUC tibble
+  model_robustness_scoef[[i]] <- model_robustness_scoef[[i]] %>%
+    mutate(method = names(model_robustness_scoef)[i])
+}
+
+#bind all the AUC tibbles into the one dataframe
+scoef_df <- do.call(rbind, model_robustness_scoef)
+
+#auc plot across bottleneck severities
+ggplot(data = scoef_df,
+       aes(x = s_coef, y = .estimate, color = method)) +
+  geom_point() +
+  scale_x_log10() + 
+  ylab("AUC") +
+  xlab("selection coefficient")
+
+#CV surface plots ----
 
 #plot of tuning params vs cv accuracy
 lr_tune <- tuned_models[[1]]$tune_tibble

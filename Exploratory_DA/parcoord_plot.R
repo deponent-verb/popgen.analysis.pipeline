@@ -5,7 +5,7 @@ genomes = read_csv("~/work/MPhil/ml_review/data/hubs_data/dataframes/split_snp/0
 
 
 genome_SS <- genomes %>%
-  select(ID, sweep,H_1:h123_11,severity)
+  dplyr::select(ID, sweep,H_1:h123_11,severity)
 
 taj_D = rep(NA,11)
 for(i in 1:11){
