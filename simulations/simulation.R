@@ -45,7 +45,7 @@ selection=c(0,100,250,500,750,1000,2000)/(2*Ne)
 
 nsim=1000
 setwd("~/work/MPhil/ml_review/data/hubs_data/bottlenecks/")
-sweep_type="soft"
+sweep_type="hard"
 
 #loop for hard sweeps, with bottlenecks
 
@@ -60,7 +60,7 @@ foreach(s = 1:length(selection)) %dopar%{
       sim = popgen.tools::discoal_sim(mu=mu,recomb_rate = recomb_rate, Ne = Ne,
                         genome_length = nBases, samplesize = samplesize,
                         s = selection[s], discoal_path = discoal_path,
-                        sweep=sweep_type, fix_time = 1, popsize_changes = b)
+                        sweep=sweep_type, fix_time = fix, popsize_changes = b)
       name = paste("hardsim_s",selection[s],"_n",i,"_b",b$size[1],"_t1",b$time[1],"_t2",b$time[2],
                    ".rds",sep="")
       print(name)
@@ -76,7 +76,7 @@ b=Sys.time()
 
 nsim=1000
 setwd("~/work/MPhil/ml_review/data/hubs_data/constant_pop/")
-sweep_type="soft"
+sweep_type="hard"
 
 cores=detectCores()
 cl<-makeCluster(cores)
@@ -89,7 +89,7 @@ foreach(s = 1:length(selection)) %dopar% {
       sim = popgen.tools::discoal_sim(mu=mu,recomb_rate = recomb_rate, Ne = Ne,
                         genome_length = nBases, samplesize = samplesize,
                         s = selection[s], discoal_path = discoal_path,
-                        sweep=sweep_type, fix_time = 1)
+                        sweep=sweep_type, fix_time = fix)
       name = paste("hardsim_s",selection[s],"_n",i,"constant_pop",
                    ".rds",sep="")
       print(name)
