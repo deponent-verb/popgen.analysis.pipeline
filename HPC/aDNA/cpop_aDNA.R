@@ -55,5 +55,6 @@ df = foreach (r = 1:length(missing_rate)) %:%
     #rm(genomes)
   }
 
+df = unlist(df, recursive = F)
 final_df = data.table::rbindlist(df, use.names = T, fill = F, idcol = T)
 readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/ancient_df/ancient_cpop1.csv")
