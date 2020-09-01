@@ -41,6 +41,7 @@ std_recipe <- recipe(sweep ~., data=genome_train) %>% #set sweep as response var
   step_normalize(all_predictors()) %>% #normalize all predictors
   prep()
 
+#check transformed data to ensure it all makes sense
 baked_train <- bake(std_recipe, genome_train)
 
 #downsample the training dataset for VIP calculations
@@ -182,6 +183,8 @@ tuned_models <- map2(.x = model_list,
 saveRDS(tuned_models, file = "./results/models_tuned.rds")
 
 #find variables of importance for each model
+
+#check s_coef isn't used for model fitting
 vip_all <- map(.x = tuned_models,
                .f = model_vip,
                baked_data=ds_baked_train)

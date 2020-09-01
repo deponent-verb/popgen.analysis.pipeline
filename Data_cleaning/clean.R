@@ -1,4 +1,4 @@
-#common data cleaning script to be used across all workflows
+#common data cleaning script to be used across all workflows (for modern data)
 library(tidyverse)
 
 #read in data
