@@ -49,7 +49,7 @@ df = foreach (r = 1:length(missing_rate)) %:%
     #compute SS on the small set
     popgen.tools::ancient_generate_df(sim_list = genomes,nwins = 5,
                                       split_type="mut",trim_sim = F,missing_rate = missing_rate[r],
-                                      trans_prop = trans_prop,dmg_rate = dmg_rate,index = asc_indices)
+                                      trans_prop = trans_prop,dmg_rate = dmg_rate,ascertain_indices = asc_indices)
     
     #remove the simulations from memory once we finished computing SS
     #rm(genomes)
