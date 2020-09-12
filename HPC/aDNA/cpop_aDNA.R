@@ -23,7 +23,7 @@ setwd("/fast/users/a1708050/mphil/ml_review/ancient_data/constant_pop")
 missing_rate = c(0.05,0.35,0.65,0.95)
 trans_prop = 0.776
 dmg_rate = 0.05
-asc_indices = seq(101,111,by=1)
+asc_indices = lapply( seq(99,119,by=2), function(d){c(d,d+1)})
 
 #randomly split simulations into chunks for parallel SS computation
 all_names = list.files(pattern=".rds")
