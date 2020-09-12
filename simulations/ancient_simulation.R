@@ -8,14 +8,14 @@ mu=1.5e-8
 recomb_rate=1e-8
 Ne=1e4
 nBases=1e6
-samplesize=111
+samplesize=120
 discoal_path="~/work/programs/discoal/discoal"
 fix=0 #sweeps are recently fixed at time of sampling
 selection=c(0,100,250,500,750,1000,2000)/(2*Ne)
 
 #population tree
 demes = 2
-sample_dist = c(101,10)
+sample_dist = c(100,20)
 deme_join = tibble::tibble(time = 50000/25,pop1 = 0, pop2=1)
 
 nsim=1000
