@@ -36,6 +36,8 @@ std_recipe <- recipe(sweep ~., data=genome_train) %>% #set sweep as response var
   step_normalize(all_predictors(), -has_role("haplotype")) %>% #normalize all predictors, except haplotype stats
   prep()
 
+#if you get Error in lognet, check if you have NAs in final transformed data
+
 check <- summary(std_recipe)
 
 #transform training data for vip functions

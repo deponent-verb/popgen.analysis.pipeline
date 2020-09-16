@@ -20,9 +20,9 @@ cl<-makeCluster(cores)
 setwd("/fast/users/a1708050/mphil/ml_review/ancient_data/constant_pop")
 
 #set DNA aging parameters
-missing_rate = c(0.05,0.35,0.65,0.95)
+missing_rate = seq(0,0.5,by=0.1)
 trans_prop = 0.776
-dmg_rate = 0.05
+dmg_rate = 0
 asc_indices = lapply( seq(99,119,by=2), function(d){c(d,d+1)})
 
 #randomly split simulations into chunks for parallel SS computation
@@ -57,4 +57,4 @@ df = foreach (r = 1:length(missing_rate)) %:%
 
 df = unlist(df, recursive = F)
 final_df = data.table::rbindlist(df, use.names = T, fill = F, idcol = T)
-readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/ancient_df/ancient_cpop1.csv")
+readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/ancient_df/no_deam.csv")
