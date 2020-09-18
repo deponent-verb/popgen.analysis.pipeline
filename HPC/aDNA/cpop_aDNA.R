@@ -23,7 +23,7 @@ setwd("/fast/users/a1708050/mphil/ml_review/ancient_data/constant_pop")
 #missing_rate = seq(0,0.5,by=0.1)
 missing_rate = 0
 trans_prop = 0.776
-dmg_rate = c(0.01,0.05,by=0.01)
+dmg_rate = seq(0.01,0.05,by=0.01)
 asc_indices = lapply( seq(99,119,by=2), function(d){c(d,d+1)})
 
 #randomly split simulations into chunks for parallel SS computation
@@ -50,8 +50,8 @@ df = foreach (r = 1:length(dmg_rate)) %:%
     
     #compute SS on the small set
     popgen.tools::ancient_generate_df(sim_list = genomes,nwins = 5,
-                                      split_type="mut",trim_sim = F,missing_rate = missing_rate[r],
-                                      trans_prop = trans_prop,dmg_rate = dmg_rate,ascertain_indices = asc_indices)
+                                      split_type="mut",trim_sim = F,missing_rate = missing_rate,
+                                      trans_prop = trans_prop,dmg_rate = dmg_rate[r],ascertain_indices = asc_indices)
     
     #remove the simulations from memory once we finished computing SS
     #rm(genomes)
