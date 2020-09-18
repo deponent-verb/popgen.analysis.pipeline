@@ -8,7 +8,7 @@ library(tidymodels)
 source("./Model_comparison/model_tune.R")
 
 #read in data
-ancient_genomes <- read_csv("./data/cleaned_aDNA.csv")
+ancient_genomes <- read_csv("./data/cleaned_aDNA_nodeam.csv")
 ancient_genomes$sweep <- as.factor(ancient_genomes$sweep)
 
 skimr::skim(ancient_genomes)
@@ -25,14 +25,15 @@ genome_test = testing (genome_split)
 #Organise variables into groups for the recipe
 
 #Since the haplotype statistics are proportions, we don't want to normalise them.
-hap_cols <- colnames(ancient_genomes)[16:35]
-aDNA_dmg_cols <- colnames(ancient_genomes)[3:5]
+hap_cols <- colnames(ancient_genomes)[17:35]
+aDNA_dmg_cols <- colnames(ancient_genomes)[4:6]
 
 std_recipe <- recipe(sweep ~., data=genome_train) %>% #set sweep as response variable. everything else is a predictor.
   update_role(s_coef, new_role = 'demography') %>% #remove s_coef as predictor
-  update_role(aDNA_dmg_cols, new_role = 'damage') %>% 
+  update_role(.id, new_role = "ID") %>%
+  update_role( aDNA_dmg_cols, new_role = 'damage') %>% 
   add_role(hap_cols, new_role = 'haplotype') %>%
-  #step_corr(all_predictors(),threshold = 0.9) %>% #remove all highly correlated predictors
+  step_corr(all_predictors(),threshold = 0.9) %>% #remove all highly correlated predictors
   step_normalize(all_predictors(), -has_role("haplotype")) %>% #normalize all predictors, except haplotype stats
   prep()
 

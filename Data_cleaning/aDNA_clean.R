@@ -3,7 +3,8 @@
 library(tidyverse)
 
 #read in data
-ancient_genomes<-read_csv("~/work/MPhil/ml_review/ancient_data/ancient_df/ancient_cpop1.csv")
+#ancient_genomes<-read_csv("~/work/MPhil/ml_review/ancient_data/ancient_df/ancient_cpop1.csv")
+ancient_genomes<-read_csv("~/work/MPhil/ml_review/ancient_data/ancient_df/no_deam.csv")
 
 #filter out unneeded params
 ancient_genomes <- subset(ancient_genomes, 
@@ -11,9 +12,9 @@ ancient_genomes <- subset(ancient_genomes,
 ancient_genomes <- subset(ancient_genomes,
                           select = -c(block_base_length_1:block_snp_length_5))
 ancient_genomes <- subset(ancient_genomes,
-                          select = -c(.id,ID))
+                          select = -c(.id))
 
-write_csv(ancient_genomes,
-          "~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
+#write_csv(ancient_genomes,"~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
 
+write_csv(ancient_genomes,"~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA_nodeam.csv")
 

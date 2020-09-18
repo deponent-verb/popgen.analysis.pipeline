@@ -20,9 +20,10 @@ cl<-makeCluster(cores)
 setwd("/fast/users/a1708050/mphil/ml_review/ancient_data/constant_pop")
 
 #set DNA aging parameters
-missing_rate = seq(0,0.5,by=0.1)
+#missing_rate = seq(0,0.5,by=0.1)
+missing_rate = 0
 trans_prop = 0.776
-dmg_rate = 0
+dmg_rate = c(0.01,0.05,by=0.01)
 asc_indices = lapply( seq(99,119,by=2), function(d){c(d,d+1)})
 
 #randomly split simulations into chunks for parallel SS computation
@@ -35,7 +36,8 @@ sim_groups = split(all_names, as.factor(1:n))
 
 doParallel::registerDoParallel(cl,cores = cores)
 
-df = foreach (r = 1:length(missing_rate)) %:%
+#df = foreach (r = 1:length(missing_rate)) %:%
+df = foreach (r = 1:length(dmg_rate)) %:%
   foreach(i = 1:length(sim_groups)) %dopar% {
     
     #ensure correct library and directory for each core
