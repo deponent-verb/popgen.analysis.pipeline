@@ -20,11 +20,11 @@ cl<-makeCluster(cores)
 setwd("/fast/users/a1708050/mphil/ml_review/ancient_data/constant_pop")
 
 #set DNA aging parameters
-missing_rate = seq(0,0.5,by=0.1)
+missing_rate = seq(0,0.95,by=0.1)
 #missing_rate = 0
 trans_prop = 0.776
 #dmg_rate = seq(0.01,0.05,by=0.01)
-dmg_rate = 0
+dmg_rate = 0.05
 asc_indices = lapply( seq(99,119,by=2), function(d){c(d,d+1)})
 impute = c("zero","random")
 
@@ -48,8 +48,8 @@ df = foreach (r = 1:length(missing_rate)) %:%
   foreach(i = 1:length(sim_groups)) %dopar% {
     
     #ensure correct library and directory for each core
-    .libPaths(libs)
-    setwd("/fast/users/a1708050/mphil/ml_review/ancient_data/constant_pop")
+    #.libPaths(libs)
+    #setwd("/fast/users/a1708050/mphil/ml_review/ancient_data/constant_pop")
     
     #load a small set of 100 simulations
     genomes = lapply(sim_groups[[i]], function(d){ lapply(d,readRDS)}) 
@@ -70,4 +70,4 @@ df = unlist(df, recursive = F)
 df = unlist(df, recursive = F)
 
 final_df = data.table::rbindlist(df, use.names = T, fill = F, idcol = T)
-readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/ancient_df/no_deam.csv")
+readr::write_csv(final_df,path="/fast/users/a1708050/mphil/ml_review/ancient_df/aDNA_cpop.csv")

@@ -8,22 +8,22 @@ library(tidymodels)
 source("./Model_comparison/model_tune.R")
 
 #read in data
-#ancient_genomes = read_csv("./data/cleaned_aDNA_nodeam.csv")
-ancient_genomes = read_csv("./data/cleaned_aDNA_deam.csv")
+#ancient_genomes <- read_csv("./data/cleaned_aDNA_nodeam.csv")
+ancient_genomes = read_csv("./data/cleaned_aDNA_nodeam.csv")
 ancient_genomes$sweep <- as.factor(ancient_genomes$sweep)
 
 ancient_genomes$impute_method <- as.factor(ancient_genomes$impute_method)
-zero_imp_genomes = ancient_genomes %>%
-  filter(impute_method=="zero")
+random_imp_genomes = ancient_genomes %>%
+  filter(impute_method=="random")
 
 #skimr::skim(ancient_genomes)
 
 
 #Partition dataset into training and testing sets.
-set.seed(800)
-zero_genome_split<-initial_split(zero_imp_genomes,prop=0.8)
-zero_genome_train = training(zero_genome_split)
-zero_genome_test = testing(zero_genome_split)
+set.seed(820)
+genome_split<-initial_split(random_imp_genomes,prop=0.8)
+randimp_genome_train = training (genome_split)
+randimp_genome_test = testing (genome_split)
 
 #Recipe
 
@@ -33,7 +33,7 @@ zero_genome_test = testing(zero_genome_split)
 hap_cols <- colnames(ancient_genomes)[17:35]
 aDNA_dmg_cols <- colnames(ancient_genomes)[4:6]
 
-zero_std_recipe <- recipe(sweep ~., data = zero_genome_train) %>% #set sweep as response variable. everything else is a predictor.
+randimp_std_recipe <- recipe(sweep ~., data = randimp_genome_train) %>% #set sweep as response variable. everything else is a predictor.
   update_role(s_coef, new_role = 'demography') %>% #remove s_coef as predictor
   update_role(impute_method, new_role = 'damage') %>%
   update_role(ID, new_role = "ID") %>%
@@ -45,10 +45,10 @@ zero_std_recipe <- recipe(sweep ~., data = zero_genome_train) %>% #set sweep as 
 
 #if you get Error in lognet, check if you have NAs in final transformed data
 
-check <- summary(zero_std_recipe)
+check <- summary(randimp_std_recipe)
 
 #transform training data for vip functions
-zero_baked_train <- bake(zero_std_recipe, zero_genome_train)
+randimp_baked_train <- bake(randimp_std_recipe, randimp_genome_train)
 
 #Model fitting
 genome_lr = logistic_reg(
@@ -64,8 +64,8 @@ lr_grid = grid_regular(penalty(range=c(0,0.1)) ,
                        original = F)
 
 #fit model
-zero_lr_results = model_tune(recipe = zero_std_recipe,
-                        train_data = zero_genome_train,
+randimp_lr_results = model_tune(recipe = randimp_std_recipe,
+                        train_data = randimp_genome_train,
                         cv_folds = 5,
                         model = genome_lr ,
                         tuning_params = lr_grid,
@@ -73,20 +73,20 @@ zero_lr_results = model_tune(recipe = zero_std_recipe,
 
 #AUC for each combination of s_coef and missing rate
 source("./Model_comparison/auc_scoef.R")
-auc_scoef(fitted_model = zero_lr_results$fitted_model, 
-          test_data = zero_genome_test,
-          recipe = zero_std_recipe)
+auc_scoef(fitted_model = randimp_lr_results$fitted_model, 
+          test_data = randimp_genome_test,
+          recipe = randimp_std_recipe)
 
 source("./aDNA_analysis/auc_aDNA.R")
 
-zero_auc_res = auc_aDNA(fitted_model = zero_lr_results$fitted_model, 
-         test_data = zero_genome_test,
-         recipe = zero_std_recipe)
+randimp_auc_res = auc_aDNA(fitted_model = randimp_lr_results$fitted_model, 
+                   test_data = randimp_genome_test,
+                   recipe = randimp_std_recipe)
 
-ggplot(data = zero_auc_res, aes(x = missing_rate, y = .estimate, color = s_coef)) +
+ggplot(data = randimp_auc_res, aes(x = missing_rate, y = .estimate, color = s_coef)) +
   geom_point() +
   ylab("AUC") +
-  ggtitle("Zero Imputation Deam")
+  ggtitle("Random Imputation Deam")
 
 source("./Model_comparison/model_vip.R")
 lr_imp = model_vip(model = lr_results, baked_data = baked_train)
