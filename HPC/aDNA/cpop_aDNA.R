@@ -34,11 +34,13 @@ impute = c("zero","random")
 
 #randomly split simulations into chunks for parallel SS computation
 all_names = list.files(pattern=".rds")
-set.seed(2)
 #This line is to randomly downsample the data for testing purposes
 #all_names = sample(all_names, size = 1000, replace = F)
 n = length(all_names)/500
+ID = seq(1,length(all_names),by=1)
+set.seed(2)
 sim_groups = split(all_names, as.factor(1:n))
+ID_groups = split(ID, as.factor(1:n))
 
 doParallel::registerDoParallel(cl,cores = cores)
 
@@ -48,8 +50,8 @@ df = foreach (r = 1:length(missing_rate)) %:%
   foreach(i = 1:length(sim_groups)) %dopar% {
     
     #ensure correct library and directory for each core
-    #.libPaths(libs)
-    #setwd("/fast/users/a1708050/mphil/ml_review/ancient_data/constant_pop")
+    .libPaths(libs)
+    setwd("/fast/users/a1708050/mphil/ml_review/ancient_data/constant_pop")
     
     #load a small set of 100 simulations
     genomes = lapply(sim_groups[[i]], function(d){ lapply(d,readRDS)}) 
@@ -59,7 +61,7 @@ df = foreach (r = 1:length(missing_rate)) %:%
     popgen.tools::ancient_generate_df(sim_list = genomes,nwins = 5,
                                       split_type="mut",trim_sim = F,missing_rate = missing_rate[r],
                                       trans_prop = trans_prop,dmg_rate = dmg_rate,ascertain_indices = asc_indices,
-                                      impute_method = impute[imp])
+                                      impute_method = impute[imp],ID = ID_groups[[i]])
     
     #remove the simulations from memory once we finished computing SS
     #rm(genomes)
