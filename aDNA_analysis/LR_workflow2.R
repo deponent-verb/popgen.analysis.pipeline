@@ -9,18 +9,21 @@ source("./Model_comparison/model_tune.R")
 
 #read in data
 #ancient_genomes <- read_csv("./data/cleaned_aDNA_nodeam.csv")
-ancient_genomes = read_csv("./data/cleaned_aDNA_nodeam.csv")
+ancient_genomes = read_csv("./data/cleaned_aDNA.csv")
 ancient_genomes$sweep <- as.factor(ancient_genomes$sweep)
 
 ancient_genomes$impute_method <- as.factor(ancient_genomes$impute_method)
 random_imp_genomes = ancient_genomes %>%
   filter(impute_method=="random")
 
+#turn ID into a categorical variable as this indicates which simulation the row came from
+random_imp_genomes$ID <- random_imp_genomes$ID %>% as.factor()
+
 #skimr::skim(ancient_genomes)
 
 
 #Partition dataset into training and testing sets.
-set.seed(820)
+set.seed(860)
 genome_split<-initial_split(random_imp_genomes,prop=0.8)
 randimp_genome_train = training (genome_split)
 randimp_genome_test = testing (genome_split)
@@ -30,7 +33,7 @@ randimp_genome_test = testing (genome_split)
 #Organise variables into groups for the recipe
 
 #Since the haplotype statistics are proportions, we don't want to normalise them.
-hap_cols <- colnames(ancient_genomes)[17:35]
+hap_cols <- colnames(ancient_genomes)[17:36]
 aDNA_dmg_cols <- colnames(ancient_genomes)[4:6]
 
 randimp_std_recipe <- recipe(sweep ~., data = randimp_genome_train) %>% #set sweep as response variable. everything else is a predictor.
@@ -39,7 +42,8 @@ randimp_std_recipe <- recipe(sweep ~., data = randimp_genome_train) %>% #set swe
   update_role(ID, new_role = "ID") %>%
   update_role( aDNA_dmg_cols, new_role = 'damage') %>% 
   add_role(hap_cols, new_role = 'haplotype') %>%
-  step_corr(all_predictors(),threshold = 0.9) %>% #remove all highly correlated predictors
+  step_naomit(all_predictors(), skip = TRUE) %>%
+  step_corr(all_predictors(), -has_role("sim_ID"), threshold = 0.9) %>% #remove all highly correlated predictors
   step_normalize(all_predictors(), -has_role("haplotype")) %>% #normalize all predictors, except haplotype stats
   prep()
 
@@ -66,7 +70,7 @@ lr_grid = grid_regular(penalty(range=c(0,0.1)) ,
 #fit model
 randimp_lr_results = model_tune(recipe = randimp_std_recipe,
                         train_data = randimp_genome_train,
-                        cv_folds = 5,
+                        cv_folds = 10,
                         model = genome_lr ,
                         tuning_params = lr_grid,
                         seed = 162)

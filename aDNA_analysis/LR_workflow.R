@@ -9,18 +9,21 @@ source("./Model_comparison/model_tune.R")
 
 #read in data
 #ancient_genomes = read_csv("./data/cleaned_aDNA_nodeam.csv")
-ancient_genomes = read_csv("./data/cleaned_aDNA_deam.csv")
+ancient_genomes = read_csv("./data/cleaned_aDNA.csv")
 ancient_genomes$sweep <- as.factor(ancient_genomes$sweep)
 
 ancient_genomes$impute_method <- as.factor(ancient_genomes$impute_method)
 zero_imp_genomes = ancient_genomes %>%
   filter(impute_method=="zero")
 
+#turn ID into a categorical variable as this indicates which simulation the row came from
+zero_imp_genomes$ID <- zero_imp_genomes$ID %>% as.factor()
+
 #skimr::skim(ancient_genomes)
 
 
 #Partition dataset into training and testing sets.
-set.seed(800)
+set.seed(8012)
 zero_genome_split<-initial_split(zero_imp_genomes,prop=0.8)
 zero_genome_train = training(zero_genome_split)
 zero_genome_test = testing(zero_genome_split)
@@ -30,16 +33,16 @@ zero_genome_test = testing(zero_genome_split)
 #Organise variables into groups for the recipe
 
 #Since the haplotype statistics are proportions, we don't want to normalise them.
-hap_cols <- colnames(ancient_genomes)[17:35]
+hap_cols <- colnames(ancient_genomes)[17:36]
 aDNA_dmg_cols <- colnames(ancient_genomes)[4:6]
 
 zero_std_recipe <- recipe(sweep ~., data = zero_genome_train) %>% #set sweep as response variable. everything else is a predictor.
   update_role(s_coef, new_role = 'demography') %>% #remove s_coef as predictor
   update_role(impute_method, new_role = 'damage') %>%
-  update_role(ID, new_role = "ID") %>%
+  update_role(ID, new_role = "sim_ID") %>%
   update_role( aDNA_dmg_cols, new_role = 'damage') %>% 
   add_role(hap_cols, new_role = 'haplotype') %>%
-  step_corr(all_predictors(),threshold = 0.9) %>% #remove all highly correlated predictors
+  step_corr(all_predictors(),-has_role("sim_ID"),threshold = 0.9) %>% #remove all highly correlated predictors
   step_normalize(all_predictors(), -has_role("haplotype")) %>% #normalize all predictors, except haplotype stats
   prep()
 
@@ -66,7 +69,7 @@ lr_grid = grid_regular(penalty(range=c(0,0.1)) ,
 #fit model
 zero_lr_results = model_tune(recipe = zero_std_recipe,
                         train_data = zero_genome_train,
-                        cv_folds = 5,
+                        cv_folds = 10,
                         model = genome_lr ,
                         tuning_params = lr_grid,
                         seed = 162)

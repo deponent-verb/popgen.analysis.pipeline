@@ -233,14 +233,12 @@ robustness_df <- do.call(rbind, model_robustness)
 #auc plot across bottleneck severities
 ggplot(data = robustness_df,
        aes(x = severity+1, y = .estimate, color = method)) + #+1 to offset severity 0
-  geom_point(size=5) +
+  geom_point() +
   scale_x_log10() + 
   ylab("AUC") +
-  xlab("severity") +
-  theme(axis.text=element_text(size=35),
-                          axis.title=element_text(size=40,face="bold"),
-        legend.text = element_text(size = 25),
-        legend.title = element_text(size = 25)) 
+  xlab("severity") + 
+  theme(axis.text=element_text(size=20),
+                         axis.title=element_text(size=25,face="bold"))
 
 model_robustness <- map(.x = finalised_models, 
                         .f = model_performance,
