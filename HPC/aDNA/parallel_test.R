@@ -15,7 +15,7 @@ if (is.numeric(slurm_ntasks)) {
 } else {
   cores = detectCores() # Figure out how many cores there are
 }
-cl<-makeCluster(cores)
+cl<- makeCluster(cores)
 
 setwd("/fast/users/a1708050/mphil/ml_review/ancient_data/constant_pop")
 
