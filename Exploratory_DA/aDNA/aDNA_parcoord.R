@@ -1,23 +1,25 @@
 #parallel coordinates plots for aDNA data
 pacman::p_load(tidyverse)
 
-genomes = read_csv("./data/cleaned_aDNA.csv")
+#genomes = read_csv("./data/cleaned_aDNA.csv")
+genomes = read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_small_aDNA.csv")
 genomes$sweep <- as.factor(genomes$sweep)
 
 genome_SS_long = 
   genomes %>%
-  filter(impute_method == "zero") %>%
+  filter(impute_method == "random") %>%
+  filter(denoise_method == "cluster") %>%
   pivot_longer(D_1:h123_5)
 
 #Plot
-labs  <- glue::glue("H[{1:5}]")
+labs  <- glue::glue("h1[{1:5}]")
 
 genome_SS_long %>% 
-  filter(str_detect(name, "H_")) %>% 
-  mutate(name = factor(name, levels = str_c("H_", 1:5))) %>% 
+  filter(str_detect(name, "h1_")) %>% 
+  mutate(name = factor(name, levels = str_c("h1_", 1:5))) %>% 
   ggplot(aes(x = name, y = value, col = sweep)) + 
   geom_line(aes(group = ID), alpha = 0.1) + 
-  #geom_smooth(aes(group = sweep), se = FALSE) + 
+  geom_smooth(aes(group = sweep), se = FALSE) + 
   #stat_summary(fun=mean, colour="red", geom="line", size = 3) # draw a mean line in the data
   scale_color_brewer(palette = "Set1") + 
   labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 

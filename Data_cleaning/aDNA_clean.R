@@ -4,7 +4,8 @@ library(tidyverse)
 
 #read in data
 #ancient_genomes<-read_csv("~/work/MPhil/ml_review/ancient_data/ancient_df/ancient_cpop1.csv")
-ancient_genomes<-read_csv("~/work/MPhil/ml_review/ancient_data/ancient_df/aDNA_cpop.csv")
+#ancient_genomes<-read_csv("~/work/MPhil/ml_review/ancient_data/ancient_df/aDNA_cpop.csv")
+ancient_genomes<-read_csv("~/work/MPhil/ml_review/ancient_data/ancient_df/aDNA_small.csv")
 
 #filter out unneeded params
 ancient_genomes <- subset(ancient_genomes, 
@@ -16,5 +17,6 @@ ancient_genomes <- subset(ancient_genomes,
 
 #write_csv(ancient_genomes,"~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
 
-write_csv(ancient_genomes,"~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
+#write_csv(ancient_genomes,"~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
+write_csv(ancient_genomes,"~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_small_aDNA.csv")
 
