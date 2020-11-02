@@ -41,6 +41,7 @@ ID_groups = split(ID, as.factor(1:n))
 
 doParallel::registerDoParallel(cl,cores = cores)
 
+#make sure you check arguments within loop
 df = foreach( imp = 1:length(impute)) %:%
   foreach (r = 1:length(dmg_rate)) %:%
   foreach(i = 1:length(sim_groups)) %dopar% {
@@ -55,8 +56,8 @@ df = foreach( imp = 1:length(impute)) %:%
     
     #compute SS on the small set
     popgen.tools::ancient_generate_df(sim_list = genomes,nwins = 5,
-                                      split_type="mut",trim_sim = F,missing_rate = missing_rate[r],
-                                      trans_prop = trans_prop,dmg_rate = dmg_rate,ascertain_indices = asc_indices,
+                                      split_type="mut",trim_sim = F,missing_rate = 0,
+                                      trans_prop = trans_prop,dmg_rate = dmg_rate[r],ascertain_indices = asc_indices,
                                       impute_method = impute[imp],ID = ID_groups[[i]])
     
     #remove the simulations from memory once we finished computing SS
