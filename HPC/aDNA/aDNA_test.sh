@@ -12,5 +12,7 @@
 
 # Execute the program
 # (The example here is a sequential bash script; use a suitable program for your case.)
+module use /hpcfs/users/a1708050/easybuild/modules/all
+module load R/4.0.0-foss-2019b
 R CMD BATCH aDNA_test.R
 cat aDNA_test.Rout

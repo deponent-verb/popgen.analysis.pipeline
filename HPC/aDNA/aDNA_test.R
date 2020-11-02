@@ -6,7 +6,6 @@ library("popgen.tools")
 library("tidyverse")
 library("foreach")
 library("parallel")
-library("doSNOW")
 
 libs = .libPaths(c("/hpcfs/users/a1708050/local/RLibs",.libPaths()))
 
