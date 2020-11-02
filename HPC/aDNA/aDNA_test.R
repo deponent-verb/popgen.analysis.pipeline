@@ -68,5 +68,5 @@ df = unlist(df, recursive = F)
 df = unlist(df, recursive = F)
 
 final_df = data.table::rbindlist(df, use.names = T, fill = F, idcol = T)
-readr::write_csv(final_df,path="/hpcfs/users/a1708050/mphil/ml_review/ancient_data/dataframes/test_set1.csv")
+readr::write_csv(final_df, file ="/hpcfs/users/a1708050/mphil/ml_review/ancient_data/dataframes/test_set1.csv")
 
