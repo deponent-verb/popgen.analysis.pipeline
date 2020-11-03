@@ -55,7 +55,7 @@ df = foreach( imp = 1:length(impute)) %:%
     
     #compute SS on the small set
     popgen.tools::ancient_generate_df(sim_list = genomes,nwins = 5,
-                                      split_type="mut",trim_sim = F,missing_rate = 0,
+                                      split_type="base",trim_sim = F,missing_rate = 0,
                                       trans_prop = trans_prop,dmg_rate = dmg_rate[r],ascertain_indices = asc_indices,
                                       impute_method = impute[imp],ID = ID_groups[[i]])
     
@@ -68,5 +68,5 @@ df = unlist(df, recursive = F)
 df = unlist(df, recursive = F)
 
 final_df = data.table::rbindlist(df, use.names = T, fill = F, idcol = T)
-readr::write_csv(final_df, file ="/hpcfs/users/a1708050/mphil/ml_review/ancient_data/dataframes/test_set1.csv")
+readr::write_csv(final_df, file ="/hpcfs/users/a1708050/mphil/ml_review/ancient_data/dataframes/test_set2.csv")
 
