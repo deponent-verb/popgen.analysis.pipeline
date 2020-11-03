@@ -60,7 +60,7 @@ df = foreach( imp = 1:length(impute)) %:%
                                       impute_method = impute[imp],ID = ID_groups[[i]])
     
     #remove the simulations from memory once we finished computing SS
-    #rm(genomes)
+    rm(genomes)
   }
 
 #need to unlist each of the foreach loops
