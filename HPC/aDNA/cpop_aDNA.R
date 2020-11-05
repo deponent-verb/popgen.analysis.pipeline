@@ -33,6 +33,7 @@ denoise = c("none", "cluster")
 #randomly split simulations into chunks for parallel SS computation
 all_names = list.files(pattern=".rds")
 #This line is to randomly downsample the data for testing purposes
+set.seed(22)
 all_names = sample(all_names, size = 1000, replace = F)
 n = length(all_names)/200
 ID = seq(1,length(all_names),by=1)
