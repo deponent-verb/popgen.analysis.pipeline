@@ -23,7 +23,7 @@ df = for(r in missing_rate){
   for(imp in impute){
     for(denoise in denoise_method){
       for(i in 1:length(trunc_names)){
-        print(c(r,imp,trunc_names[i]),denoise)
+        print(c(r,imp,trunc_names[i],denoise))
         genome = readRDS(trunc_names[i])
         ancient_sum_stats(sim = genome, nwins = 5, split_type = "mut", 
                           trim_sim = F, missing_rate = r,ascertain_indices = asc_indices,
@@ -54,6 +54,7 @@ ancient_sum_stats(sim = genome, nwins = 5, split_type = "mut",
 #missing rate 0, "zero" impute, "ancient_hardsim_s0.1_n496constant_pop.rds"
 #more cluster centers than data points error
 genome = readRDS(trunc_names[203])
+saveRDS(genome, file = "~/Desktop/test_genome.rds")
 ancient_sum_stats(sim = genome, nwins = 5, split_type = "mut", 
                   trim_sim = F, missing_rate = 0,ascertain_indices = asc_indices,
                   impute_method = "zero" ,denoise_method = "cluster", ID = 1)
