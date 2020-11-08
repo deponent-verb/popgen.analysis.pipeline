@@ -33,8 +33,8 @@ denoise = c("none", "cluster")
 #randomly split simulations into chunks for parallel SS computation
 all_names = list.files(pattern=".rds")
 #This line is to randomly downsample the data for testing purposes
-set.seed(22)
-all_names = sample(all_names, size = 1000, replace = F)
+#set.seed(22)
+#all_names = sample(all_names, size = 1000, replace = F)
 n = length(all_names)/200
 ID = seq(1,length(all_names),by=1)
 set.seed(2)
@@ -72,4 +72,4 @@ df = unlist(df, recursive = F)
 df = unlist(df, recursive = F)
 
 final_df = data.table::rbindlist(df, use.names = T, fill = F, idcol = T)
-readr::write_csv(final_df,path="/hpcfs/users/a1708050/mphil/ml_review/ancient_data/dataframes/small_aDNA_cpop.csv")
+readr::write_csv(final_df, file ="/hpcfs/users/a1708050/mphil/ml_review/ancient_data/dataframes/aDNA_cpop.csv")
