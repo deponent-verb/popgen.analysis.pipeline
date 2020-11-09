@@ -14,7 +14,7 @@ trans_prop = 0.776
 dmg_rate = 0.05
 asc_indices = lapply( seq(99,119,by=2), function(d){c(d,d+1)})
 impute = c("zero","random")
-denoise_method = c("none","majority_flip","cluster")
+denoise_method = c("none","cluster")
 
 
 #for testing purposes on home machine
