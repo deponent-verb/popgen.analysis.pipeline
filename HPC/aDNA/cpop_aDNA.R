@@ -20,6 +20,7 @@ setwd("/hpcfs/users/a1708050/mphil/ml_review/ancient_data/constant_pop")
 
 #set DNA aging parameters
 missing_rate = seq(0,0.9,by=0.1)
+#missing_rate = seq(0,0.1,by=0.1)
 trans_prop = 0.776
 dmg_rate = 0.05
 asc_indices = lapply( seq(99,119,by=2), function(d){c(d,d+1)})
@@ -42,6 +43,9 @@ sim_groups = split(all_names, as.factor(1:n))
 ID_groups = split(ID, as.factor(1:n))
 
 doParallel::registerDoParallel(cl,cores = cores)
+
+#home test
+#cl<-parallel::makeCluster(4,setup_strategy = "sequential")
 
 df = foreach (r = 1:length(missing_rate)) %:%
   foreach( imp = 1:length(impute)) %:%
@@ -68,7 +72,8 @@ df = foreach (r = 1:length(missing_rate)) %:%
                                       impute_method = impute[imp],ID = ID_groups[[i]],denoise_method = denoise[d])
     
     #remove the simulations from memory once we finished computing SS
-    rm(genomes)
+    #this line needs to be commented out or we get null dataframes
+    #rm(genomes)
   }
 
 #need to unlist each of the foreach loops
@@ -78,4 +83,4 @@ df = unlist(df, recursive = F)
 
 final_df = data.table::rbindlist(df, use.names = T, fill = F, idcol = T)
 head(final_df)
-readr::write_csv(final_df, file ="/hpcfs/users/a1708050/mphil/ml_review/ancient_data/dataframes/aDNA_cpop.csv")
+readr::write_csv(final_df, file ="/hpcfs/users/a1708050/mphil/ml_review/ancient_data/dataframes/small_aDNA_cpop.csv")
