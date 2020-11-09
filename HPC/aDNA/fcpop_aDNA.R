@@ -25,7 +25,7 @@ trans_prop = 0.776
 dmg_rate = 0.05
 asc_indices = lapply( seq(99,119,by=2), function(d){c(d,d+1)})
 impute = c("zero","random")
-denoise = c("none", "cluster")
+denoise = "fixed_cluster"
 
 #for testing purposes on home machine
 #setwd("~/work/MPhil/ml_review/ancient_data/constant_pop/")
@@ -49,7 +49,6 @@ doParallel::registerDoParallel(cl,cores = cores)
 
 df = foreach (r = 1:length(missing_rate)) %:%
   foreach( imp = 1:length(impute)) %:%
-  foreach (d = 1:length(denoise)) %:%
   foreach(i = 1:length(sim_groups)) %dopar% {
     
     #ensure correct library and directory for each core
@@ -69,7 +68,7 @@ df = foreach (r = 1:length(missing_rate)) %:%
     popgen.tools::ancient_generate_df(sim_list = genomes,nwins = 5,
                                       split_type="mut",trim_sim = F,missing_rate = missing_rate[r],
                                       trans_prop = trans_prop,dmg_rate = dmg_rate,ascertain_indices = asc_indices,
-                                      impute_method = impute[imp],ID = ID_groups[[i]],denoise_method = denoise[d])
+                                      impute_method = impute[imp],ID = ID_groups[[i]], fixed_clus = 10)
     
     #remove the simulations from memory once we finished computing SS
     #this line needs to be commented out or we get null dataframes
@@ -79,8 +78,7 @@ df = foreach (r = 1:length(missing_rate)) %:%
 #need to unlist each of the foreach loops
 df = unlist(df, recursive = F)
 df = unlist(df, recursive = F)
-df = unlist(df, recursive = F)
 
 final_df = data.table::rbindlist(df, use.names = T, fill = F, idcol = T)
 head(final_df)
-readr::write_csv(final_df, file ="/hpcfs/users/a1708050/mphil/ml_review/ancient_data/dataframes/aDNA_cpop.csv")
+readr::write_csv(final_df, file ="/hpcfs/users/a1708050/mphil/ml_review/ancient_data/dataframes/fc_aDNA_cpop.csv")
