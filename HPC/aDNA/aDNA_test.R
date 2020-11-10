@@ -23,7 +23,7 @@ setwd("/hpcfs/users/a1708050/mphil/ml_review/ancient_data/constant_pop")
 #set DNA aging parameters
 missing_rate = 0
 trans_prop = 0.776
-dmg_rate = c(0,0.05)
+dmg_rate = seq(0,0.05,by=0.01)
 asc_indices = lapply( seq(99,119,by=2), function(d){c(d,d+1)})
 impute = c("zero","random")
 
@@ -55,7 +55,7 @@ df = foreach( imp = 1:length(impute)) %:%
     
     #compute SS on the small set
     popgen.tools::ancient_generate_df(sim_list = genomes,nwins = 5,
-                                      split_type="base",trim_sim = F,missing_rate = 0,
+                                      split_type="mut",trim_sim = F,missing_rate = 0,
                                       trans_prop = trans_prop,dmg_rate = dmg_rate[r],ascertain_indices = asc_indices,
                                       impute_method = impute[imp],ID = ID_groups[[i]])
     
