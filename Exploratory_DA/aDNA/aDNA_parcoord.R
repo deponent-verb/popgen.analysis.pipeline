@@ -7,7 +7,7 @@ genomes$sweep <- as.factor(genomes$sweep)
 
 genome_SS_long = genomes %>%
   filter(impute_method == "random") %>%
-  filter(dmg_rate == 0) %>%
+  #filter(dmg_rate == 0.02) %>%
   #filter(denoise_method == "cluster") %>%
   pivot_longer(D_1:h123_5)
 
@@ -25,7 +25,7 @@ genome_SS_long %>%
   scale_color_brewer(palette = "Set1") + 
   labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
   scale_x_discrete(labels = parse(text = labs)) +
-  facet_wrap("missing_rate")
+  facet_wrap("dmg_rate")
 
 #if you get Error in grid.Call(C_textBounds, as.graphicsAnnot(x$label), x$x, x$y,  : 
 #polygon edge not found, make sure you run the labs line as well.
