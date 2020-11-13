@@ -68,7 +68,8 @@ df = foreach (r = 1:length(missing_rate)) %:%
     popgen.tools::ancient_generate_df(sim_list = genomes,nwins = 5,
                                       split_type="mut",trim_sim = F,missing_rate = missing_rate[r],
                                       trans_prop = trans_prop,dmg_rate = dmg_rate,ascertain_indices = asc_indices,
-                                      impute_method = impute[imp],ID = ID_groups[[i]], fixed_clus = 10)
+                                      impute_method = impute[imp],ID = ID_groups[[i]], fixed_clus = 10,
+                                      denoise_method = denoise_method)
     
     #remove the simulations from memory once we finished computing SS
     #this line needs to be commented out or we get null dataframes
