@@ -25,7 +25,7 @@ trans_prop = 0.776
 dmg_rate = 0.05
 asc_indices = lapply( seq(99,119,by=2), function(d){c(d,d+1)})
 impute = c("zero","random")
-denoise = "fixed_cluster"
+denoise_method = "fixed_cluster"
 
 #for testing purposes on home machine
 #setwd("~/work/MPhil/ml_review/ancient_data/constant_pop/")
