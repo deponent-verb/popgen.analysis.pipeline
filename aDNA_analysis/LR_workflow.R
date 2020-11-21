@@ -33,8 +33,8 @@ zero_genome_test = testing(zero_genome_split)
 #Organise variables into groups for the recipe
 
 #Since the haplotype statistics are proportions, we don't want to normalise them.
-hap_cols <- colnames(ancient_genomes)[17:36]
-aDNA_dmg_cols <- colnames(ancient_genomes)[4:6]
+hap_cols <- colnames(ancient_genomes)[19:38]
+aDNA_dmg_cols <- colnames(ancient_genomes)[5:8]
 
 zero_std_recipe <- recipe(sweep ~., data = zero_genome_train) %>% #set sweep as response variable. everything else is a predictor.
   update_role(s_coef, new_role = 'demography') %>% #remove s_coef as predictor

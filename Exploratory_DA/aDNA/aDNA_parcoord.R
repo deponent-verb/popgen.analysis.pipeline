@@ -6,17 +6,17 @@ genomes = read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDN
 genomes$sweep <- as.factor(genomes$sweep)
 
 genome_SS_long = genomes %>%
-  filter(impute_method == "zero") %>%
+  filter(impute_method == "random") %>%
   #filter(dmg_rate == 0.02) %>%
-  filter(denoise_method == "cluster") %>%
+  filter(denoise_method == "none") %>%
   pivot_longer(D_1:h123_5)
 
 #Plot
-labs  <- glue::glue("h123[{1:5}]")
+labs  <- glue::glue("D[{1:5}]")
 
 genome_SS_long %>% 
-  filter(str_detect(name, "h123_")) %>% 
-  mutate(name = factor(name, levels = str_c("h123_", 1:5))) %>% 
+  filter(str_detect(name, "D_")) %>% 
+  mutate(name = factor(name, levels = str_c("D_", 1:5))) %>% 
   ggplot(aes(x = name, y = value, col = sweep)) + 
   geom_line(aes(group = ID), alpha = 0.01) + 
   #geom_smooth(aes(group = sweep), se = FALSE) + 

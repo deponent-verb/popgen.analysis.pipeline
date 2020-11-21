@@ -2,12 +2,12 @@
 library(tidyverse)
 library(tidymodels)
 
-genomes = read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_small_aDNA.csv")
+genomes = read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
 
 #Data cleaning. Take out bottleneck info and selection coefficient for now. ----
 genome_SS  <- genomes %>% 
-  filter (impute_method == "zero") %>%
-  filter (denoise_method == "none") %>%
+  #filter (impute_method == "zero") %>%
+  #filter (denoise_method == "none") %>%
   dplyr::select(sweep, H_1:h123_5)
 genome_SS
 
@@ -22,7 +22,7 @@ rm_nz = recipe(data = genome_SS, sweep ~.) %>%
 
 scree_data = bake(rm_nz, new_data = genome_SS)
 #remove response variable column
-gpca <- prcomp(scree_data[,-6], scale=T)
+gpca <- prcomp(scree_data[,-14], scale=T)
 factoextra::fviz_eig(gpca)
 
 #pca loadings
@@ -50,7 +50,7 @@ tidy_pca %>%
 
 genome_SS  <- genomes %>% 
   filter (impute_method == "random") %>%
-  filter (denoise_method == "cluster") %>%
+  filter (denoise_method == "none") %>%
   dplyr::select(s_coef, H_1:h123_5)
 
 genome_SS$s_coef <- as.factor(genome_SS$s_coef)

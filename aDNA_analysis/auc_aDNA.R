@@ -1,7 +1,8 @@
 #' auc_aDNA function
 #' 
 #' Takes a fitted model and tests it on data from with different combinations of s_coef
-#' and DNA damage parameters. Outputs the AUC for each selection coefficient. 
+#' and DNA damage parameters. Outputs the AUC for each selection coefficient and missing 
+#' rate combination.
 #'
 #' @param fitted_model : A parsnip fitted model for detecting sweeps
 #' @param test_data : A dataframe of testing data with different demographies
