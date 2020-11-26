@@ -7,7 +7,7 @@ genomes = read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDN
 #Data cleaning. Take out bottleneck info and selection coefficient for now. ----
 genome_SS  <- genomes %>% 
   #filter (impute_method == "zero") %>%
-  #filter (denoise_method == "none") %>%
+  filter (denoise_method != "none") %>%
   dplyr::select(sweep, H_1:h123_5)
 genome_SS
 
@@ -49,8 +49,8 @@ tidy_pca %>%
 #pca plot
 
 genome_SS  <- genomes %>% 
-  filter (impute_method == "random") %>%
-  filter (denoise_method == "none") %>%
+#  filter (impute_method == "random") %>%
+  filter (denoise_method != "none") %>%
   dplyr::select(s_coef, H_1:h123_5)
 
 genome_SS$s_coef <- as.factor(genome_SS$s_coef)

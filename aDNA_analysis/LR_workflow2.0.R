@@ -5,7 +5,9 @@ library(tidymodels)
 #ancient_genomes = read_csv("./data/cleaned_aDNA_nodeam.csv")
 ancient_genomes = read_csv("./data/cleaned_aDNA.csv")
 ancient_genomes$sweep <- as.factor(ancient_genomes$sweep)
-ancient_genomes$ID <- as.factor(ancient_genomes$ID)
+#ancient_genomes$ID <- as.factor(ancient_genomes$ID)
+ancient_genomes = ancient_genomes %>%
+  select(-ID)
 
 #read in functions. Must not be done outside because drake calls functions from
 #external environment. 
@@ -23,7 +25,7 @@ fit_model <- function(genomes_group){
   genomes = genomes_group[[1]]
   set.seed(12)
   #split data into training and test set
-  genome_split <- initial_split(genomes,prop=0.8)
+  genome_split <- initial_split(genomes,prop=0.8,strata = missing_rate)
   genome_train = training(genome_split)
   genome_test = testing(genome_split)
   
@@ -36,7 +38,7 @@ fit_model <- function(genomes_group){
   
   std_recipe <- recipe(sweep ~., data = genome_train) %>% #set sweep as response variable. everything else is a predictor.
     update_role(s_coef, new_role = 'demography') %>% #remove s_coef as predictor
-    update_role(ID, new_role = "sim_ID") %>%
+    #update_role(ID, new_role = "sim_ID") %>%
     update_role( all_of(aDNA_dmg_cols), new_role = 'damage') %>% 
     add_role(all_of(hap_cols), new_role = 'haplotype') %>%
     step_corr(all_predictors(),-has_role("sim_ID"),threshold = 0.9) %>% #remove all highly correlated predictors
@@ -95,13 +97,42 @@ plan <- drake_plan(
 make(plan)
 readd(model)
 
-# Fit a model to a continent.
-# fit_model <- function(continent_data) {
-#   #continent_data is a list of df
-#   data <- continent_data[[1]]
-#   data %>%
-#     lm(formula = gdpPercap ~ year) %>%
-#     tidy() %>%
-#     mutate(continent = data$continent[1]) %>%
-#     select(continent, term, statistic, p.value)
-# }
+results = readd(model)
+
+#generate AUC tables
+
+table = results %>%
+  split(f =.$tech)
+
+sapply(table, function(x){mean(x$.estimate)})
+
+#generate AUC plots
+
+ggplot(data = results, aes(x = missing_rate, y = .estimate, color = factor(s_coef))) +
+  geom_point() +
+  geom_line(aes(group = factor(s_coef))) +
+  ylab("AUC") +
+  facet_wrap("tech", scales = "free_y") +
+  scale_color_discrete(name = "technique")
+
+results_zero = results %>% 
+  filter( (tech == "zero.cluster") | (tech == "zero.fixed_cluster") | (tech =="zero.none"))
+
+ggplot(data = results_zero, aes(x = missing_rate, y = .estimate, color = tech)) +
+  geom_point() +
+  geom_line(aes(group = tech)) +
+  ylab("AUC") +
+  facet_wrap(~s_coef)+
+  scale_color_discrete(name = "technique")
+
+results_random = results %>% 
+  filter( (tech == "random.cluster") | (tech == "random.fixed_cluster") | (tech =="random.none"))
+
+ggplot(data = results_random, aes(x = missing_rate, y = .estimate, color = tech)) +
+  geom_point() +
+  geom_line(aes(group = tech)) +
+  ylab("AUC") +
+  facet_wrap(~s_coef)+
+  scale_color_discrete(name = "technique")
+
+

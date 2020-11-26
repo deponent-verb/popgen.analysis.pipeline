@@ -18,12 +18,12 @@ demes = 2
 sample_dist = c(100,20)
 deme_join = tibble::tibble(time = 50000/25,pop1 = 0, pop2=1)
 
-nsim=1000
+nsim=500*6
 setwd("~/work/MPhil/ml_review/ancient_data/constant_pop/")
 sweep_type="hard"
 
 cores=detectCores()
-cl<-makeCluster(cores)
+cl<-makeCluster(cores,setup_strategy = "sequential")
 
 doParallel::registerDoParallel(cl,cores = cores)
 
@@ -44,3 +44,4 @@ foreach(s = 1:length(selection)) %dopar% {
 b=Sys.time()
 
 #nsim = 10, takes 2.6mins
+#3000 sims took 13 hours
