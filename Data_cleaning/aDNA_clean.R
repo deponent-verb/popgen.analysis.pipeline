@@ -20,18 +20,10 @@ ancient_genomes <- subset(ancient_genomes,
 ancient_genomes <- subset(ancient_genomes,
                           select = -c(block_base_length_1:block_snp_length_5))
 ancient_genomes <- subset(ancient_genomes,
-                          select = -c(.id))
-
-#to avoid repeated measures, randomly sample one data point for each simulation ID
-
-small_data = ancient_genomes %>%
-  split(f = .$ID)
-
-new_rows = lapply(small_data, function(sim){sample_n(sim,1)})
-new_data = data.table::rbindlist(new_rows)
+                          select = -c(.id,ID))
 
 #write_csv(ancient_genomes,"~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
 
 #write_csv(ancient_genomes,"~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
-write_csv(new_data,"~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
+write_csv(ancient_genomes,"~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
 

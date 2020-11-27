@@ -28,7 +28,7 @@ denoise = c("none", "cluster")
 sim_batch = 100
 
 #for testing purposes on home machine
-setwd("~/work/MPhil/ml_review/ancient_data/constant_pop/")
+#setwd("~/work/MPhil/ml_review/ancient_data/constant_pop/")
 
 
 #randomly split simulations into chunks for parallel SS computation

@@ -1,3 +1,5 @@
+#script to investigate variables of importance in aDNA models
+
 pacman::p_load(tidyverse,vip,drake,glmnet)
 library(tidymodels)
 
@@ -5,12 +7,6 @@ library(tidymodels)
 #ancient_genomes = read_csv("./data/cleaned_aDNA_nodeam.csv")
 ancient_genomes = read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
 ancient_genomes$sweep <- as.factor(ancient_genomes$sweep)
-
-
-#read in functions. Must not be done outside because drake calls functions from
-#external environment. 
-source("~/Documents/GitHub/popgen.analysis.pipeline/aDNA_analysis/auc_aDNA.R")
-      
 
 genomes_group <- function(){
   #go make a new factor of combined factor variables
@@ -53,8 +49,8 @@ fit_model <- function(genomes_group){
   
   #Create set of tuning parameters
   tuning_grid = grid_regular(penalty(range=c(0,0.1)) ,
-                         levels=10,
-                         original = F)
+                             levels=10,
+                             original = F)
   
   #setup workflow
   meta_workflow <- workflows::workflow() %>%
@@ -68,9 +64,6 @@ fit_model <- function(genomes_group){
                            #save out of sample predictions 
                            control=tune::control_grid(save_pred = TRUE))
   
-  #get tibble of CV accuracy for the different tuning params
-  tune_results = tune::collect_metrics(tuning)
-  
   #find best tuning parameters
   best_params <- tuning %>%
     tune::select_best(metric = "accuracy")
@@ -80,10 +73,9 @@ fit_model <- function(genomes_group){
     parsnip::fit(data = genome_train)
   
   #compute AUC for each set of missing rates and s_coef
+  lr_model = pull_workflow_fit(final_workflow)
   tech = genomes$tech %>% unique()
-  auc_res = auc_aDNA(fitted_model = final_workflow, 
-                          test_data = genome_test,
-                          recipe = std_recipe) %>%
+  res = broom::tidy(lr_model) %>%
     mutate(tech = tech)
 }
 
@@ -97,40 +89,19 @@ readd(model)
 
 results = readd(model)
 
-#generate AUC tables
+tec = results$tech %>% unique()
+coef_plots = list()
 
-table = results %>%
-  split(f =.$tech)
+for(t in 1:length(tec)){
+  data = results %>% 
+    filter(tech == tec[t])
+  
+  coef_plots[[t]] = data %>%
+    ggplot(aes(x = term, y = estimate)) +
+    geom_point() + 
+    labs(title = tec[t])
+}
 
-sapply(table, function(x){mean(x$.estimate)})
-
-#generate AUC plots
-
-ggplot(data = results, aes(x = missing_rate, y = .estimate, color = factor(s_coef))) +
-  geom_point() +
-  geom_line(aes(group = factor(s_coef))) +
-  ylab("AUC") +
-  facet_wrap("tech", scales = "free_y") +
-  scale_color_discrete(name = "technique")
-
-results_zero = results %>% 
-  filter( (tech == "zero.cluster") | (tech == "zero.fixed_cluster") | (tech =="zero.none"))
-
-ggplot(data = results_zero, aes(x = missing_rate, y = .estimate, color = tech)) +
-  geom_point() +
-  geom_line(aes(group = tech)) +
-  ylab("AUC") +
-  facet_wrap(~s_coef)+
-  scale_color_discrete(name = "technique")
-
-results_random = results %>% 
-  filter( (tech == "random.cluster") | (tech == "random.fixed_cluster") | (tech =="random.none"))
-
-ggplot(data = results_random, aes(x = missing_rate, y = .estimate, color = tech)) +
-  geom_point() +
-  geom_line(aes(group = tech)) +
-  ylab("AUC") +
-  facet_wrap(~s_coef)+
-  scale_color_discrete(name = "technique")
-
-
+ggplot(aes(x = term, y = estimate),data = results) +
+  geom_point() + 
+  facet_wrap("tech")

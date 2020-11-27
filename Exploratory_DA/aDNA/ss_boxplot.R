@@ -73,3 +73,4 @@ cols <- rainbow(3, s = 0.5)
 
 ggplot(DF2, aes(y, x, fill=factor(z))) +
   geom_boxplot()
+

@@ -10,7 +10,7 @@ ancient_genomes$sweep <- as.factor(ancient_genomes$sweep)
 #read in functions. Must not be done outside because drake calls functions from
 #external environment. 
 source("~/Documents/GitHub/popgen.analysis.pipeline/aDNA_analysis/auc_aDNA.R")
-      
+
 
 genomes_group <- function(){
   #go make a new factor of combined factor variables
@@ -44,17 +44,18 @@ fit_model <- function(genomes_group){
     prep()
   
   #Model fitting
-  model = logistic_reg(
-    mode="classification",
-    penalty = tune(),
-    mixture= 1
-  ) %>%
-    set_engine("glmnet")
+  model <- mars(
+    mode = "classification",
+    prod_degree = tune(),
+    num_terms = tune(),
+    prune_method = "backward" #find default
+  ) %>% 
+    set_engine("earth")
   
   #Create set of tuning parameters
-  tuning_grid = grid_regular(penalty(range=c(0,0.1)) ,
-                         levels=10,
-                         original = F)
+  n = 2
+  tuning_grid = grid_regular(num_terms(range=c(2,10)), levels = n) %>%
+    cbind(prod_degree = c(rep(1,n),rep(2,n)))
   
   #setup workflow
   meta_workflow <- workflows::workflow() %>%
@@ -82,8 +83,8 @@ fit_model <- function(genomes_group){
   #compute AUC for each set of missing rates and s_coef
   tech = genomes$tech %>% unique()
   auc_res = auc_aDNA(fitted_model = final_workflow, 
-                          test_data = genome_test,
-                          recipe = std_recipe) %>%
+                     test_data = genome_test,
+                     recipe = std_recipe) %>%
     mutate(tech = tech)
 }
 
@@ -133,4 +134,22 @@ ggplot(data = results_random, aes(x = missing_rate, y = .estimate, color = tech)
   facet_wrap(~s_coef)+
   scale_color_discrete(name = "technique")
 
+#quick LDA plot
+library(MASS)
+
+genome_SS  <- ancient_genomes %>% 
+  filter (impute_method == "random") %>%
+  filter (denoise_method == "none") %>%
+  filter (s_coef == 0 | s_coef == 0.0125 | s_coef == 0.0250) %>%
+  dplyr::select(s_coef, D_1:H_5)
+
+genome_SS$s_coef <- as.factor(genome_SS$s_coef)
+
+#CV=T for jack-knifed estimates
+lda_fit = lda(s_coef~., data = genome_SS)
+plot(lda_fit,dimen = 2)
+
+#devtools::install_github("fawda123/ggord")
+library(ggord)
+ggord(lda_fit, genome_SS$s_coef)
 
