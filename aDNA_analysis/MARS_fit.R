@@ -3,6 +3,8 @@
 
 #Takes my ancient genome dataframe and fits a MARS model (output). 
 
+#Steps include: Partioning data for training/testing, preprocessing, tuning
+
 #this is not a proper function!
 
 MARS_fit <- function(genomes){
@@ -21,11 +23,11 @@ MARS_fit <- function(genomes){
   
   std_recipe <- recipe(sweep ~., data = genome_train) %>% #set sweep as response variable. everything else is a predictor.
     update_role(s_coef, new_role = 'demography') %>% #remove s_coef as predictor
-    #update_role(ID, new_role = "sim_ID") %>%
     update_role( all_of(aDNA_dmg_cols), new_role = 'damage') %>% 
     add_role(all_of(hap_cols), new_role = 'haplotype') %>%
+    #step_nzv(all_predictors()) %>%
     step_corr(all_predictors(),threshold = 0.8) %>% #remove all highly correlated predictors
-    step_normalize(all_predictors(), -has_role("haplotype")) %>% #normalize all predictors, except haplotype stats
+    step_normalize(all_predictors(), -has_role("haplotype")) %>% #normalize all predictors, except haplotype stats 
     prep()
   
   #Model fitting
@@ -41,7 +43,7 @@ MARS_fit <- function(genomes){
   n = 5
   # tuning_grid = grid_regular(num_terms(range=c(2,10)), levels = n) %>%
   #   cbind(prod_degree = c(rep(1,n),rep(2,n)))
-  tuning_grid = grid_regular(num_terms(range=c(4,15)), levels = n)
+  tuning_grid = grid_regular(num_terms(range=c(4,10)), levels = n)
   
   #setup workflow
   meta_workflow <- workflows::workflow() %>%
