@@ -1,5 +1,3 @@
-#script to investigate variables of importance in aDNA models
-
 pacman::p_load(tidyverse,vip,drake,glmnet)
 library(tidymodels)
 
@@ -7,6 +5,12 @@ library(tidymodels)
 #ancient_genomes = read_csv("./data/cleaned_aDNA_nodeam.csv")
 ancient_genomes = read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
 ancient_genomes$sweep <- as.factor(ancient_genomes$sweep)
+
+
+#read in functions. Must not be done outside because drake calls functions from
+#external environment. 
+source("~/Documents/GitHub/popgen.analysis.pipeline/aDNA_analysis/auc_aDNA.R")
+
 
 genomes_group <- function(){
   #go make a new factor of combined factor variables
@@ -64,18 +68,9 @@ fit_model <- function(genomes_group){
                            #save out of sample predictions 
                            control=tune::control_grid(save_pred = TRUE))
   
-  #find best tuning parameters
-  best_params <- tuning %>%
-    tune::select_best(metric = "accuracy")
-  
-  #fit final model on training data using the best set of tuning params
-  final_workflow <- tune::finalize_workflow(meta_workflow, best_params) %>%
-    parsnip::fit(data = genome_train)
-  
-  #compute AUC for each set of missing rates and s_coef
-  lr_model = pull_workflow_fit(final_workflow)
+  #get tibble of CV accuracy for the different tuning params
   tech = genomes$tech %>% unique()
-  res = broom::tidy(lr_model) %>%
+  tune_results = tune::collect_metrics(tuning) %>%
     mutate(tech = tech)
 }
 
@@ -88,20 +83,3 @@ make(plan)
 readd(model)
 
 results = readd(model)
-
-tec = results$tech %>% unique()
-coef_plots = list()
-
-for(t in 1:length(tec)){
-  data = results %>% 
-    filter(tech == tec[t])
-  
-  coef_plots[[t]] = data %>%
-    ggplot(aes(x = term, y = estimate)) +
-    geom_point() + 
-    labs(title = tec[t])
-}
-
-ggplot(aes(x = term, y = estimate),data = results) +
-  geom_point() + 
-  facet_wrap("tech")

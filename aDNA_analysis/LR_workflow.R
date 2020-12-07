@@ -1,6 +1,8 @@
 #This is a workflow to assess how well LR can detect sweeps for different 
 #aDNA damage params
 
+#now defunct
+
 library(tidyverse)
 library(vip)
 library(tidymodels)
