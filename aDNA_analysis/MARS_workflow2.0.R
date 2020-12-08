@@ -4,8 +4,14 @@ library(tidymodels)
 #read in data
 #ancient_genomes = read_csv("./data/cleaned_aDNA_nodeam.csv")
 ancient_genomes = read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
+# ancient_genomes$sweep <- ifelse(ancient_genomes$sweep=="hard",1,0)
 ancient_genomes$sweep <- as.factor(ancient_genomes$sweep)
 
+
+#make sure hard is the success level, neutral is reference level (R takes first level as ref.)
+# ancient_genomes$sweep <- as.factor(ancient_genomes$sweep)
+# ancient_genomes$sweep = relevel(ancient_genomes$sweep, "neutral")
+# contrasts(ancient_genomes$sweep)
 
 #read in functions. Must not be done outside because drake calls functions from
 #external environment. 

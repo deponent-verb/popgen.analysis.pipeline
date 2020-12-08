@@ -16,6 +16,7 @@ source("~/Documents/GitHub/popgen.analysis.pipeline/aDNA_analysis/MARS_fit.R")
 genomes_group <- function(){
   #go make a new factor of combined factor variables
   ancient_genomes %>%
+    dplyr::filter(impute_method == "random") %>%
     mutate(tech = interaction(impute_method,denoise_method)) %>%
     split(f = .$tech)
 }
@@ -26,13 +27,17 @@ fit_model <- function(genomes_group){
   #fit MARS model using specified ml workflow
   final_workflow = MARS_fit(genomes)
   
+  tech = genomes$tech %>% unique()
+  
   final_workflow %>%
-    pull_workflow_fit() %>%
-    vip(num_features = 10, method = "firm", train = genomes)
+      pull_workflow_fit() %>%
+      vip(num_features = 10, method = "firm", train = genomes) +
+      ggtitle(tech)
   
   # final_workflow %>%
   #   pull_workflow_fit() %>%
-  #   vi(num_features = 10, method = "firm")
+  #   vip(num_features = 10, method = "firm", train = genomes) %>%
+  #   mutate(tech = tech)
 }
 
 plan <- drake_plan(
@@ -42,3 +47,11 @@ plan <- drake_plan(
 
 make(plan)
 readd(model)
+
+#check pdp plots for preferred method
+
+genomes = ancient_genomes %>%
+  mutate(tech = interaction(impute_method,denoise_method)) %>%
+  dplyr::filter(tech == "random.fixed_cluster")
+
+final_workflow = MARS_fit(genomes)

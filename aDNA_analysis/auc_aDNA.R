@@ -37,7 +37,7 @@ auc_aDNA <- function (fitted_model, test_data, recipe){
         dplyr::filter(s_coef == s, missing_rate == miss)
       
       dem_data = dplyr::bind_rows(hard_data,neutral_data)
-      truth <- dem_data$sweep %>% as.factor()
+      truth <- dem_data$sweep %>% as.factor() 
       preds <- predict(fitted_model, dem_data, type = 'prob')
       dem_auc[[i]] <-roc_auc(tibble(preds,truth), truth = truth, .pred_hard) %>%
         mutate(s_coef = s, missing_rate = miss)
