@@ -4,7 +4,7 @@ library(tidymodels)
 #read in data
 #ancient_genomes = read_csv("./data/cleaned_aDNA_nodeam.csv")
 ancient_genomes = read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
-# ancient_genomes$sweep <- ifelse(ancient_genomes$sweep=="hard",1,0)
+ancient_genomes$sweep <- ifelse(ancient_genomes$sweep=="hard",1,0)
 ancient_genomes$sweep <- as.factor(ancient_genomes$sweep)
 
 

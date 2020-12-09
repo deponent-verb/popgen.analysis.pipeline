@@ -6,6 +6,7 @@ library(tidymodels)
 #read in data
 #ancient_genomes = read_csv("./data/cleaned_aDNA_nodeam.csv")
 ancient_genomes = read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
+ancient_genomes$sweep <- ifelse(ancient_genomes$sweep=="hard",1,0)
 ancient_genomes$sweep <- as.factor(ancient_genomes$sweep)
 
 
@@ -47,11 +48,3 @@ plan <- drake_plan(
 
 make(plan)
 readd(model)
-
-#check pdp plots for preferred method
-
-genomes = ancient_genomes %>%
-  mutate(tech = interaction(impute_method,denoise_method)) %>%
-  dplyr::filter(tech == "random.fixed_cluster")
-
-final_workflow = MARS_fit(genomes)

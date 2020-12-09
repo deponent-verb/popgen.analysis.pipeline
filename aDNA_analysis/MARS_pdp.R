@@ -5,11 +5,14 @@ library(tidymodels)
 
 #need workaround because pdp does not work with parsnip
 ancient_genomes = read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
+ancient_genomes$sweep <- ifelse(ancient_genomes$sweep=="hard",1,0)
 ancient_genomes$sweep <- as.factor(ancient_genomes$sweep)
 
 genomes = ancient_genomes %>%
   mutate(tech = interaction(impute_method,denoise_method)) %>%
   dplyr::filter(tech == "random.fixed_cluster")
+
+#transform data ourselves for pdp
 
 #Since the haplotype statistics are proportions, we don't want to normalise them.
 hap_cols <- colnames(genomes)[which(colnames(genomes)=="h1_1"):which(colnames(genomes)=="h123_5")]
@@ -26,23 +29,32 @@ std_recipe <- recipe(sweep ~., data = genomes) %>% #set sweep as response variab
 baked_data = bake(std_recipe, new_data = genomes)
 trans_data = baked_data[,which(colnames(baked_data)=="D_1"):which(colnames(baked_data)=="sweep")]
 trans_data$tech <- NULL
-
-#manually took the best parameters from workflow
-
-man_model = earth(sweep~., data = trans_data, pmethod = "backward",degree = 1,nprune = 10)
-vip(man_model, method = "firm", num_features = 10)
+trans_data$sweep <- ifelse(trans_data$sweep=="hard",1,0)
 
 
-#caret version
-caret_model = caret::train(
-  sweep~.,
-  data = trans_data,
-  method = 'earth',
-  trControl = caret::trainControl(method = "none", classProbs = TRUE),
-  tuneGrid = data.frame(nprune = 10,
-                        degree = 1),
-  metric = "accuracy"
-)
+source("~/Documents/GitHub/popgen.analysis.pipeline/aDNA_analysis/MARS_fit.R")
+final_workflow = MARS_fit(genomes)
 
-#check these look the same as one in workflow
-vip(caret_model, method = "firm", num_features = 10)
+final_workflow %>%
+  #pull parsnip model
+  pull_workflow_fit() %>%
+  #pull out MARS model since pdp does not have support for parsnip
+  .$fit %>%
+  pdp::partial(train = trans_data, pred.var = "H_3", 
+               plot = TRUE, type = "classification")
+
+#ice plot (slow atm)
+final_workflow %>%
+  #pull parsnip model
+  pull_workflow_fit() %>%
+  #pull out MARS model since pdp does not have support for parsnip
+  .$fit %>%
+  pdp::partial(train = trans_data, pred.var = "H_3", 
+               plot = TRUE, type = "classification", ice = TRUE)
+
+#1:35
+
+final_workflow %>%
+  #pull parsnip model
+  pull_workflow_fit() %>%
+  vip()
