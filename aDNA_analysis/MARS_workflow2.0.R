@@ -6,7 +6,7 @@ library(tidymodels)
 ancient_genomes = read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
 ancient_genomes$sweep <- ifelse(ancient_genomes$sweep=="hard",1,0)
 ancient_genomes$sweep <- as.factor(ancient_genomes$sweep)
-
+ancient_genomes$denoise_method <- ifelse(ancient_genomes$denoise_method == "cluster", "silhouette_cluster", ancient_genomes$denoise_method)
 
 #make sure hard is the success level, neutral is reference level (R takes first level as ref.)
 # ancient_genomes$sweep <- as.factor(ancient_genomes$sweep)
@@ -64,6 +64,8 @@ sapply(table, function(x){mean(x$.estimate)})
 
 #generate AUC plots
 
+#change tech name to have clearer legend
+
 ggplot(data = results, aes(x = missing_rate, y = .estimate, color = factor(s_coef))) +
   geom_point() +
   geom_line(aes(group = factor(s_coef))) +
@@ -72,7 +74,7 @@ ggplot(data = results, aes(x = missing_rate, y = .estimate, color = factor(s_coe
   scale_color_discrete(name = "technique")
 
 results_zero = results %>% 
-  filter( (tech == "zero.cluster") | (tech == "zero.fixed_cluster") | (tech =="zero.none"))
+  filter( (tech == "zero.silhouette_cluster") | (tech == "zero.fixed_cluster") | (tech =="zero.none"))
 
 ggplot(data = results_zero, aes(x = missing_rate, y = .estimate, color = tech)) +
   geom_point() +
@@ -82,7 +84,7 @@ ggplot(data = results_zero, aes(x = missing_rate, y = .estimate, color = tech)) 
   scale_color_discrete(name = "technique")
 
 results_random = results %>% 
-  filter( (tech == "random.cluster") | (tech == "random.fixed_cluster") | (tech =="random.none"))
+  filter( (tech == "random.silhouette_cluster") | (tech == "random.fixed_cluster") | (tech =="random.none"))
 
 ggplot(data = results_random, aes(x = missing_rate, y = .estimate, color = tech)) +
   geom_point() +

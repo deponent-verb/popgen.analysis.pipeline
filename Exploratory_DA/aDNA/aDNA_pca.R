@@ -4,6 +4,7 @@ library(tidymodels)
 library(drake)
 
 ancient_genomes = read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
+ancient_genomes$denoise_method <- ifelse(ancient_genomes$denoise_method == "cluster", "silhouette_cluster", ancient_genomes$denoise_method)
 
 #drake pipeline for dynamic branching
 genomes_group <- function(){

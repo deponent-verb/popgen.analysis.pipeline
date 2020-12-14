@@ -35,15 +35,15 @@ MARS_fit <- function(genomes){
     mode = "classification",
     prod_degree = 1,
     num_terms = tune(),
-    prune_method = "backward" #find default
+    prune_method = "forward" #find default
   ) %>% 
     set_engine("earth")
   
   #Create set of tuning parameters
   n = 5
-  # tuning_grid = grid_regular(num_terms(range=c(2,10)), levels = n) %>%
+  # tuning_grid = grid_regular(num_terms(range=c(4,10)), levels = n) %>%
   #   cbind(prod_degree = c(rep(1,n),rep(2,n)))
-  tuning_grid = grid_regular(num_terms(range=c(4,10)), levels = n)
+  tuning_grid = grid_regular(num_terms(range=c(4,12)), levels = n)
   
   #setup workflow
   meta_workflow <- workflows::workflow() %>%

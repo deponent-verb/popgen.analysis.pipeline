@@ -40,8 +40,45 @@ final_workflow %>%
   pull_workflow_fit() %>%
   #pull out MARS model since pdp does not have support for parsnip
   .$fit %>%
-  pdp::partial(train = trans_data, pred.var = "H_3", 
+  pdp::partial(train = trans_data, pred.var = "D_5", 
                plot = TRUE, type = "classification")
+
+#manually checked the important stats by FIRM
+
+sfs = c("H_3","D_1","H_1","D_5")
+
+par(mfrow=c(1,4))
+sfs_plot = list()
+for(i in 1:length(sfs)){
+  sfs_plot[[i]] = final_workflow %>%
+    #pull parsnip model
+    pull_workflow_fit() %>%
+    #pull out MARS model since pdp does not have support for parsnip
+    .$fit %>%
+    pdp::partial(train = trans_data, pred.var = sfs[i], 
+                 plot = TRUE, type = "classification")
+}
+
+grid.arrange(sfs_plot[[1]],sfs_plot[[2]],sfs_plot[[3]],sfs_plot[[4]], ncol = 2)
+
+hap = c("h1_1","h1_3","h1_4","h1_5")
+hap_plot = list()
+
+for(i in 1:length(sfs)){
+  hap_plot[[i]] = final_workflow %>%
+    #pull parsnip model
+    pull_workflow_fit() %>%
+    #pull out MARS model since pdp does not have support for parsnip
+    .$fit %>%
+    pdp::partial(train = trans_data, pred.var = hap[i], 
+                 plot = TRUE, type = "classification")
+}
+
+grid.arrange(hap_plot[[1]],hap_plot[[2]],hap_plot[[3]],hap_plot[[4]], ncol = 2)
+
+grid.arrange(sfs_plot[[1]],sfs_plot[[2]],sfs_plot[[3]],sfs_plot[[4]],
+             hap_plot[[1]],hap_plot[[2]],hap_plot[[3]],hap_plot[[4]], ncol = 4)
+
 
 #ice plot (slow atm)
 final_workflow %>%

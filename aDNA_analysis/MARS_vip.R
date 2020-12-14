@@ -8,6 +8,7 @@ library(tidymodels)
 ancient_genomes = read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
 ancient_genomes$sweep <- ifelse(ancient_genomes$sweep=="hard",1,0)
 ancient_genomes$sweep <- as.factor(ancient_genomes$sweep)
+ancient_genomes$denoise_method <- ifelse(ancient_genomes$denoise_method == "cluster", "silhouette_cluster", ancient_genomes$denoise_method)
 
 
 #read in functions. Must not be done outside because drake calls functions from
@@ -30,15 +31,24 @@ fit_model <- function(genomes_group){
   
   tech = genomes$tech %>% unique()
   
+  wkfl_rec = final_workflow %>%
+    pull_workflow_prepped_recipe()
+  
   final_workflow %>%
-      pull_workflow_fit() %>%
-      vip(num_features = 10, method = "firm", train = genomes) +
-      ggtitle(tech)
+    pull_workflow_fit() %>%
+    #need to supply transformed training data for vip
+    vip(method = "firm", train = bake(wkfl_rec,genomes)) +
+    ggtitle(tech)
   
   # final_workflow %>%
   #   pull_workflow_fit() %>%
   #   vip(num_features = 10, method = "firm", train = genomes) %>%
   #   mutate(tech = tech)
+  
+  # final_workflow %>%
+  #     pull_workflow_fit() %>%
+  #     vip(num_features = 10, method = "firm", train = genomes) +
+  #     ggtitle(tech)
 }
 
 plan <- drake_plan(
@@ -47,4 +57,10 @@ plan <- drake_plan(
 )
 
 make(plan)
-readd(model)
+plots = readd(model)
+
+par(mfrow=c(1,3))
+plots[[1]]
+plots[[2]]
+
+grid.arrange(plots[[1]],plots[[2]],plots[[3]], ncol = 3)
