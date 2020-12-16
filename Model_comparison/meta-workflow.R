@@ -13,7 +13,8 @@ source("./Model_comparison/auc_scoef.R")
 #load data from cleaning script
 
 genomes = read_csv("~/work/MPhil/ml_review/data/hubs_data/dataframes/split_snp/0.25ds_snp_set.csv")
-
+genomes$sweep <- ifelse(ancient_genomes$sweep=="hard",1,0)
+genomes$sweep <- as.factor(ancient_genomes$sweep)
 #truncate dataset to contain response and predictors only. Used for model fitting.
 
 genomes_SS = genomes %>% 
@@ -31,14 +32,16 @@ genome_test = testing (genome_split)
 
 #Recipe design ----
 
-#The standard recipe just standardizes all the predictors (mean=0, var =1) 
+#Since the haplotype statistics are proportions, we don't want to normalise them.
+hap_cols <- colnames(genomes)[which(colnames(genomes)=="h1_1"):which(colnames(genomes)=="h123_11")]
 
 std_recipe <- recipe(sweep ~., data=genome_train) %>% #set sweep as response variable. everything else is a predictor.
   update_role(demography, new_role = 'demography') %>% #remove demography as a predictor
   update_role(s_coef, new_role = 'demography') %>% #remove s_coef as predictor
   update_role(severity, new_role = 'demography') %>% #remove severity as a predictor
-  step_corr(all_predictors(),threshold = 0.9) %>% #remove all highly correlated predictors
-  step_normalize(all_predictors()) %>% #normalize all predictors
+  add_role(all_of(hap_cols), new_role = 'haplotype') %>%
+  step_corr(all_predictors(),threshold = 0.8) %>% #remove all highly correlated predictors
+  step_normalize(all_predictors(), -has_role("haplotype")) %>% #normalize all predictors
   prep()
 
 #check transformed data to ensure it all makes sense
@@ -306,7 +309,7 @@ ggplot(data = rf_tune,
 
 mars_tune <- tuned_models[[3]]$tune_tibble
 
-ggplot( data = mars_tune,
+ggplot(data = mars_tune,
         aes( x = num_terms, y = mean, color = prod_degree)) +
   geom_point() +
   geom_errorbar( aes(ymax = mean + std_err, ymin = mean - std_err)) +
@@ -315,7 +318,7 @@ ggplot( data = mars_tune,
 
 rda_tune <- tuned_models[[4]]$tune_tibble
 
-ggplot( data = rda_tune,
+ggplot(data = rda_tune,
         aes( x = frac_common_cov, y = mean, color = frac_identity)) +
   geom_point() +
   geom_errorbar( aes(ymax = mean + std_err, ymin = mean - std_err)) +

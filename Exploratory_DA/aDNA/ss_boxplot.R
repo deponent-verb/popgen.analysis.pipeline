@@ -6,6 +6,23 @@ pacman::p_load(tidyverse)
 genomes = read_csv("~/Documents/GitHub/popgen.analysis.pipeline/data/cleaned_aDNA.csv")
 genomes$sweep <- as.factor(genomes$sweep)
 
+#single boxplot
+
+genome_SS_long = genomes %>%
+  dplyr::filter(impute_method == "random") %>%
+  pivot_longer(D_1:h123_5)
+
+stat = "H_1"
+
+genome_SS_long %>% 
+  filter(str_detect(name, stat)) %>%
+  ggplot (aes( x = factor(missing_rate), y = value, fill = sweep )) +
+  geom_boxplot() + 
+  labs(x = "missing rate", title = stat)
+
+
+#collective boxplots
+
 genome_SS_long = genomes %>%
   pivot_longer(D_1:h123_5)
 
