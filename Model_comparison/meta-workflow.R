@@ -78,7 +78,7 @@ lr_results = model_tune(recipe = std_recipe,
 lr_imp = model_vip(model = lr_results, baked_data = ds_baked_train)
 saveRDS(lr_imp, file = './results/lr_imp.rds')
 
-#RandomForest classifier
+#RandomForest classifier ---
 
 genome_rf<-rand_forest(
   mode="classification",

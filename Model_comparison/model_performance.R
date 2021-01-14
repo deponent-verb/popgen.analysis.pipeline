@@ -23,7 +23,7 @@ model_performance <- function (fitted_model, test_data, recipe){
       dplyr::filter(severity == fac)
     preds <- predict(fitted_model, dem_data, type = 'prob')
     truth <- dem_data$sweep %>% as.factor()
-    dem_auc[[i]] <-roc_auc(tibble(preds,truth), truth = truth, .pred_hard) %>%
+    dem_auc[[i]] <-roc_auc(tibble(preds,truth), truth = truth, .pred_0) %>%
       mutate(severity = fac)
     i = i+1
   }

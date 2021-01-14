@@ -58,11 +58,13 @@ genome_PCA_all = bake(pc_all, genome_SS)
 genome_PCA_all %>% 
   #specify PC's as axis. Group by sweep.
   ggplot(aes(x = PC1, y = PC2, col = sweep)) + 
-  geom_point(alpha = 0.3) + 
-  geom_density_2d() + 
+  geom_point(alpha = 0.02) + 
+  #geom_density_2d() + 
   scale_color_brewer(palette = "Set1") +
   #ggtitle("PCA plot using all predictors") +
-  theme(plot.title = element_text(hjust = 0.5)) 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  guides(color = guide_legend(override.aes = list(alpha = 1)))
+
 
 #get the loadings on each PC, -1 to remove response variable
 gpca <- prcomp(genome_SS[,-1], scale=T)
@@ -94,11 +96,12 @@ genome_PCA_all = bake(pc_all, genome_SS)
 genome_PCA_all %>% 
   #specify PC's as axis. Group by s_coef
   ggplot(aes(x = PC1, y = PC2, col = s_coef)) + 
-  geom_point(alpha = 0.3) + 
-  geom_density_2d() + 
+  geom_point(alpha = 0.05) + 
+  #geom_density_2d() + 
   scale_color_brewer(palette = "Set1") +
   #ggtitle("PCA plot using all predictors") +
-  theme(plot.title = element_text(hjust = 0.5)) 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  guides(color = guide_legend(override.aes = list(alpha = 1)))
 
 #PCA plot by bottleneck severity
 

@@ -47,11 +47,12 @@ pca_plots = readd(model)
 pca_plots %>% 
   #specify PC's as axis. Group by s_coef
   ggplot(aes(x = PC1, y = PC2, col = s_coef)) + 
-  geom_point(alpha = 0.3) + 
-  geom_density_2d() + 
+  geom_point(alpha = 0.05) + 
+  #geom_density_2d() + 
   scale_color_brewer(palette = "Set1") +
   theme(plot.title = element_text(hjust = 0.5)) +
-  facet_wrap("tech")
+  facet_wrap("tech") +
+  guides(color = guide_legend(override.aes = list(alpha = 1)))
 
 
 #end of dynamic branching

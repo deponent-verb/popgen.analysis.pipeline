@@ -3,6 +3,9 @@
 #load in data
 genomes = read_csv("~/work/MPhil/ml_review/data/hubs_data/dataframes/split_snp/0.25ds_snp_set.csv")
 
+#downsample data to make plots clearer
+set.seed(1707)
+genomes = dplyr::sample_n(genomes, nrow(genomes)*0.1)
 
 genome_SS <- genomes %>%
   dplyr::select(ID, sweep,H_1:h123_11,severity)
@@ -24,7 +27,7 @@ genome_SS_long %>%
   filter(str_detect(name, "TajD")) %>% 
   mutate(name = factor(name, levels = str_c("TajD_", 1:11))) %>% 
   ggplot(aes(x = name, y = value, col = sweep)) + 
-  geom_line(aes(group = ID), alpha = 0.01) + 
+  geom_line(aes(group = ID), alpha = 0.005) + 
   geom_smooth(aes(group = sweep), se = FALSE) + 
   scale_color_brewer(palette = "Set1") + 
   labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
@@ -35,7 +38,7 @@ genome_SS_long %>%
   filter(str_detect(name, "TajD")) %>% 
   mutate(name = factor(name, levels = str_c("TajD_", 1:11))) %>% 
   ggplot(aes(x = name, y = value, col = sweep)) + 
-  geom_line(aes(group = ID), alpha = 0.01) + 
+  geom_line(aes(group = ID), alpha = 0.015) + 
   geom_smooth(aes(group = sweep), se = FALSE) + 
   scale_color_brewer(palette = "Set1") + 
   labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
@@ -46,7 +49,7 @@ genome_SS_long %>%
   filter(str_detect(name, "H")) %>% 
   mutate(name = factor(name, levels = str_c("H_", 1:11))) %>% 
   ggplot(aes(x = name, y = value, col = sweep)) + 
-  geom_line(aes(group = ID), alpha = 0.01) + 
+  geom_line(aes(group = ID), alpha = 0.015) + 
   geom_smooth(aes(group = sweep), se = FALSE) + 
   scale_color_brewer(palette = "Set1") + 
   labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
@@ -57,7 +60,7 @@ genome_SS_long %>%
   filter(str_detect(name, "h1_")) %>% 
   mutate(name = factor(name, levels = str_c("h1_", 1:11))) %>% 
   ggplot(aes(x = name, y = value, col = sweep)) + 
-  geom_line(aes(group = ID), alpha = 0.01) + 
+  geom_line(aes(group = ID), alpha = 0.015) + 
   geom_smooth(aes(group = sweep), se = FALSE) + 
   scale_color_brewer(palette = "Set1") + 
   labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
@@ -68,7 +71,18 @@ genome_SS_long %>%
   filter(str_detect(name, "h2")) %>% 
   mutate(name = factor(name, levels = str_c("h2_", 1:11))) %>% 
   ggplot(aes(x = name, y = value, col = sweep)) + 
-  geom_line(aes(group = ID), alpha = 0.01) + 
+  geom_line(aes(group = ID), alpha = 0.015) + 
+  geom_smooth(aes(group = sweep), se = FALSE) + 
+  scale_color_brewer(palette = "Set1") + 
+  labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
+  scale_x_discrete(labels = parse(text = labs))
+
+labs  <- glue::glue("h12[{1:11}]")
+genome_SS_long %>% 
+  filter(str_detect(name, "h12_")) %>% 
+  mutate(name = factor(name, levels = str_c("h12_", 1:11))) %>% 
+  ggplot(aes(x = name, y = value, col = sweep)) + 
+  geom_line(aes(group = ID), alpha = 0.015) + 
   geom_smooth(aes(group = sweep), se = FALSE) + 
   scale_color_brewer(palette = "Set1") + 
   labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
@@ -79,18 +93,7 @@ genome_SS_long %>%
   filter(str_detect(name, "h123")) %>% 
   mutate(name = factor(name, levels = str_c("h123_", 1:11))) %>% 
   ggplot(aes(x = name, y = value, col = sweep)) + 
-  geom_line(aes(group = ID), alpha = 0.01) + 
-  geom_smooth(aes(group = sweep), se = FALSE) + 
-  scale_color_brewer(palette = "Set1") + 
-  labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
-  scale_x_discrete(labels = parse(text = labs))
-
-labs  <- glue::glue("LD_avg[{1:11}]")
-genome_SS_long %>% 
-  filter(str_detect(name, "LD_avg")) %>% 
-  mutate(name = factor(name, levels = str_c("LD_avg_", 1:11))) %>% 
-  ggplot(aes(x = name, y = value, col = sweep)) + 
-  geom_line(aes(group = ID), alpha = 0.01) + 
+  geom_line(aes(group = ID), alpha = 0.015) + 
   geom_smooth(aes(group = sweep), se = FALSE) + 
   scale_color_brewer(palette = "Set1") + 
   labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
@@ -101,11 +104,12 @@ genome_SS_long %>%
   filter(str_detect(name, "w_max")) %>% 
   mutate(name = factor(name, levels = str_c("w_max_", 1:11))) %>% 
   ggplot(aes(x = name, y = value, col = sweep)) + 
-  geom_line(aes(group = ID), alpha = 0.01) + 
+  geom_line(aes(group = ID), alpha = 0.015) + 
   geom_smooth(aes(group = sweep), se = FALSE) + 
   scale_color_brewer(palette = "Set1") + 
   labs(x = "Summary statistic", y = "Observed value", col = "Type of sweep") + 
-  scale_x_discrete(labels = parse(text = labs))
+  scale_x_discrete(labels = parse(text = labs)) +
+  scale_y_continuous(trans='log10')
 
 labs  <- glue::glue("Zns[{1:11}]")
 genome_SS_long %>% 

@@ -70,7 +70,7 @@ for(h in 1:length(haplo_stats)){
     labs(subtitle = haplo_stats[h], x = "missing rate")
 }
 
-genome_SS_long %>% 
+hgenome_SS_long %>% 
   filter(str_detect(name, "h2_3")) %>%
   mutate(tech = interaction(impute_method,denoise_method)) %>%
   ggplot (aes( x = factor(missing_rate), y = value, fill = sweep )) +

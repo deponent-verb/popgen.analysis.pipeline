@@ -32,7 +32,7 @@ auc_scoef <- function (fitted_model, test_data, recipe){
     dem_data = dplyr::bind_rows(hard_data,neutral_data)
     truth <- dem_data$sweep %>% as.factor()
     preds <- predict(fitted_model, dem_data, type = 'prob')
-    dem_auc[[i]] <-roc_auc(tibble(preds,truth), truth = truth, .pred_hard) %>%
+    dem_auc[[i]] <-roc_auc(tibble(preds,truth), truth = truth, .pred_0) %>%
       mutate(s_coef = s)
     i = i+1
   }
