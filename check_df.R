@@ -1,3 +1,5 @@
+#example script for parallel coordinates plot
+
 pacman::p_load(tidyverse,popgen.tools)
 
 #load data
